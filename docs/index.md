@@ -8,7 +8,7 @@
 
 **A minimal MCP server for BigQuery SQL validation and dry-run analysis**
 
-[Getting Started :material-rocket-launch:](get-started/index.md){ .md-button .md-button--primary }
+[Getting Started :material-rocket-launch:](installation.md){ .md-button .md-button--primary }
 [View on GitHub :material-github:](https://github.com/caron14/mcp-bigquery){ .md-button }
 
 </div>
@@ -30,7 +30,7 @@ The `mcp-bigquery` package provides a Model Context Protocol (MCP) server that e
 
     Validate BigQuery SQL syntax without running queries. Catch errors early in your development workflow.
 
-    [:octicons-arrow-right-24: Validation Guide](guides/validation.md)
+    [:octicons-arrow-right-24: Validation Guide](usage.md#sql-validation)
 
 -   :material-calculator:{ .lg .middle } **Cost Estimation**
 
@@ -38,7 +38,7 @@ The `mcp-bigquery` package provides a Model Context Protocol (MCP) server that e
 
     Get accurate cost estimates based on bytes processed. Optimize queries before execution.
 
-    [:octicons-arrow-right-24: Cost Estimation](guides/cost-estimation.md)
+    [:octicons-arrow-right-24: Cost Estimation](usage.md#dry-run-analysis)
 
 -   :material-table:{ .lg .middle } **Schema Preview**
 
@@ -46,7 +46,7 @@ The `mcp-bigquery` package provides a Model Context Protocol (MCP) server that e
 
     Preview result schemas and referenced tables without accessing actual data.
 
-    [:octicons-arrow-right-24: Dry-Run Analysis](guides/dry-run.md)
+    [:octicons-arrow-right-24: Dry-Run Analysis](usage.md#dry-run-analysis)
 
 -   :material-code-tags:{ .lg .middle } **Parameter Support**
 
@@ -54,7 +54,7 @@ The `mcp-bigquery` package provides a Model Context Protocol (MCP) server that e
 
     Validate parameterized queries with full support for query parameters.
 
-    [:octicons-arrow-right-24: Using Parameters](guides/parameters.md)
+    [:octicons-arrow-right-24: Using Parameters](usage.md#using-parameters)
 
 </div>
 
@@ -119,7 +119,7 @@ Or with uv:
 uv pip install mcp-bigquery
 ```
 
-[Get Started :material-arrow-right:](get-started/installation.md){ .md-button .md-button--primary }
+[Get Started :material-arrow-right:](installation.md){ .md-button .md-button--primary }
 
 ## Use Cases
 
@@ -148,21 +148,21 @@ uv pip install mcp-bigquery
 
 <div class="grid cards" markdown>
 
--   :material-rocket-launch:{ .lg .middle } **[Getting Started](get-started/index.md)**
+-   :material-rocket-launch:{ .lg .middle } **[Installation](installation.md)**
 
-    Installation, authentication, and your first query validation
+    Setup, authentication, and configuration
 
--   :material-book-open-variant:{ .lg .middle } **[Guides](guides/index.md)**
+-   :material-book-open-variant:{ .lg .middle } **[Usage Guide](usage.md)**
 
-    Detailed guides for validation, analysis, and best practices
+    SQL validation, dry-run analysis, and best practices
 
--   :material-api:{ .lg .middle } **[API Reference](api-reference/index.md)**
+-   :material-api:{ .lg .middle } **[API Reference](api-reference.md)**
 
-    Complete API documentation with schemas and examples
+    Complete tool documentation and schemas
 
--   :material-code-braces:{ .lg .middle } **[Examples](examples/index.md)**
+-   :material-code-braces:{ .lg .middle } **[Examples](examples.md)**
 
-    Real-world examples and use cases
+    Real-world queries and patterns
 
 </div>
 

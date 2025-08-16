@@ -84,32 +84,8 @@ extra:
 
 nav:
   - Home: index.md
-  - Getting Started:
-    - get-started/index.md
-    - Installation: get-started/installation.md
-    - Quick Start: get-started/quickstart.md
-    - Authentication: get-started/authentication.md
-  - Guides:
-    - guides/index.md
-    - SQL Validation: guides/validation.md
-    - Dry-Run Analysis: guides/dry-run.md
-    - Cost Estimation: guides/cost-estimation.md
-    - Using Parameters: guides/parameters.md
-  - API Reference:
-    - api-reference/index.md
-    - Tools: api-reference/tools.md
-    - Response Schemas: api-reference/schemas.md
-    - Error Reference: api-reference/errors.md
-  - Deployment:
-    - deploy/index.md
-    - Claude Code Setup: deploy/claude-code.md
-    - Other MCP Clients: deploy/mcp-clients.md
-  - Examples:
-    - examples/index.md
-    - Basic Usage: examples/basic.md
-    - Advanced Scenarios: examples/advanced.md
-  - Development:
-    - development/index.md
-    - Setup: development/setup.md
-    - Testing: development/testing.md
-    - Contributing: development/contributing.md
+  - Installation: installation.md
+  - Usage Guide: usage.md
+  - API Reference: api-reference.md
+  - Examples: examples.md
+  - Development: development.md
