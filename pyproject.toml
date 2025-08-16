@@ -3,7 +3,7 @@ name = "mcp-bigquery"
 version = "0.1.0"
 description = "Minimal MCP server for BigQuery SQL validation and dry-run analysis"
 readme = "README.md"
-license = {text = "Apache-2.0"}
+license = {text = "MIT"}
 authors = [
     {name = "caron14", email = "caron14@users.noreply.github.com"}
 ]
@@ -14,7 +14,7 @@ keywords = ["mcp", "bigquery", "sql", "validation", "dry-run", "gcp", "claude"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
+    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",

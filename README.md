@@ -1,5 +1,5 @@
 # mcp-bigquery
-
+![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)
 [![PyPI](https://img.shields.io/pypi/v/mcp-bigquery.svg)](https://pypi.org/project/mcp-bigquery/)
 ![PyPI - Downloads](https://img.shields.io/pypi/dd/mcp-bigquery)
 
@@ -283,7 +283,7 @@ mcp-bigquery
 
 ## License
 
-Apache-2.0
+MIT
 
 ## Changelog
 
