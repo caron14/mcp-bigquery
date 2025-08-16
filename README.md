@@ -3,6 +3,10 @@
 [![PyPI](https://img.shields.io/pypi/v/mcp-bigquery.svg)](https://pypi.org/project/mcp-bigquery/)
 ![PyPI - Downloads](https://img.shields.io/pypi/dd/mcp-bigquery)
 
+<a href="https://glama.ai/mcp/servers/@caron14/mcp-bigquery">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@caron14/mcp-bigquery/badge" alt="BigQuery Validator MCP server" />
+</a>
+
 The `mcp-bigquery` package provides a minimal MCP server for BigQuery SQL validation and dry-run analysis. This server provides exactly two tools for validating and analyzing BigQuery SQL queries without executing them.
 
 ** IMPORTANT: This server does NOT execute queries. All operations are dry-run only. Cost estimates are approximations based on bytes processed.**
