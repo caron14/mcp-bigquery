@@ -292,6 +292,12 @@ MIT
 
 ## Changelog
 
+### 0.2.0 (2025-08-16)
+- Code quality improvements with pre-commit hooks
+- Enhanced development setup with Black, Ruff, isort, and mypy
+- Improved CI/CD pipeline
+- Documentation enhancements
+
 ### 0.1.0 (2025-08-16)
 - Initial release
 - Renamed from mcp-bigquery-dryrun to mcp-bigquery
