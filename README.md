@@ -292,6 +292,13 @@ MIT
 
 ## Changelog
 
+### 0.2.1 (2025-08-16)
+- Fixed GitHub Pages documentation layout issues
+- Enhanced MkDocs Material theme compatibility
+- Improved documentation dependencies and build process
+- Added site/ directory to .gitignore
+- Simplified documentation layout for better compatibility
+
 ### 0.2.0 (2025-08-16)
 - Code quality improvements with pre-commit hooks
 - Enhanced development setup with Black, Ruff, isort, and mypy
