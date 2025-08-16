@@ -287,7 +287,7 @@ Apache-2.0
 
 ## Changelog
 
-### 0.1.0 (2024-12-16)
+### 0.1.0 (2025-08-16)
 - Initial release
 - Renamed from mcp-bigquery-dryrun to mcp-bigquery
 - SQL validation tool (bq_validate_sql)
