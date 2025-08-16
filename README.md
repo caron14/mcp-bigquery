@@ -1,12 +1,12 @@
 # mcp-bigquery
 
-<p align="center">
-  <img src="docs/assets/images/logo.png" alt="mcp-bigquery logo" width="200">
-</p>
-
 ![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)
 [![PyPI](https://img.shields.io/pypi/v/mcp-bigquery.svg)](https://pypi.org/project/mcp-bigquery/)
 ![PyPI - Downloads](https://img.shields.io/pypi/dd/mcp-bigquery)
+
+<p align="center">
+  <img src="docs/assets/images/logo.png" alt="mcp-bigquery logo" width="200">
+</p>
 
 The `mcp-bigquery` package provides a minimal MCP server for BigQuery SQL validation and dry-run analysis. This server provides exactly two tools for validating and analyzing BigQuery SQL queries without executing them.
 
