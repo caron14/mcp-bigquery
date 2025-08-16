@@ -1,36 +1,38 @@
 """Pytest configuration and fixtures for mcp-bigquery tests."""
 
-import pytest
 import os
 import sys
-from pathlib import Path
+
+import pytest
 
 
 def pytest_configure(config):
     """Configure pytest with custom markers and settings."""
     config.addinivalue_line(
-        "markers", "requires_credentials: mark test as requiring BigQuery credentials"
+        "markers",
+        "requires_credentials: mark test as requiring BigQuery credentials",
     )
+    config.addinivalue_line("markers", "unit: mark test as a unit test (no external dependencies)")
     config.addinivalue_line(
-        "markers", "unit: mark test as a unit test (no external dependencies)"
-    )
-    config.addinivalue_line(
-        "markers", "integration: mark test as an integration test (requires BigQuery)"
+        "markers",
+        "integration: mark test as an integration test (requires BigQuery)",
     )
 
 
 def pytest_collection_modifyitems(config, items):
     """Modify test collection to add markers and skip conditions."""
-    
+
     # Check for credentials
     has_credentials = (
         os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") is not None
-        or os.path.exists(os.path.expanduser("~/.config/gcloud/application_default_credentials.json"))
+        or os.path.exists(
+            os.path.expanduser("~/.config/gcloud/application_default_credentials.json")
+        )
         or os.environ.get("GOOGLE_CLOUD_PROJECT") is not None
     )
-    
+
     skip_integration = pytest.mark.skip(reason="BigQuery credentials not available")
-    
+
     for item in items:
         # Add markers based on test location
         if "test_integration" in str(item.fspath):
@@ -40,7 +42,7 @@ def pytest_collection_modifyitems(config, items):
                 item.add_marker(skip_integration)
         elif "test_imports" in str(item.fspath):
             item.add_marker(pytest.mark.unit)
-        
+
         # Skip async tests if running in incompatible environment
         if "asyncio" in [mark.name for mark in item.iter_markers()]:
             if sys.version_info < (3, 9):
@@ -63,22 +65,21 @@ def test_location():
 @pytest.fixture
 def mock_bigquery_client():
     """Provide a mock BigQuery client for unit tests."""
-    from unittest.mock import Mock, MagicMock
+    from unittest.mock import MagicMock, Mock
+
     from google.cloud import bigquery
-    
+
     mock_client = Mock(spec=bigquery.Client)
     mock_client.location = "US"
     mock_client.project = "test-project"
-    
+
     # Mock query method
     mock_query_job = MagicMock()
     mock_query_job.total_bytes_processed = 1024
-    mock_query_job.schema = [
-        MagicMock(name="test_field", field_type="STRING", mode="NULLABLE")
-    ]
+    mock_query_job.schema = [MagicMock(name="test_field", field_type="STRING", mode="NULLABLE")]
     mock_query_job.referenced_tables = []
     mock_client.query.return_value = mock_query_job
-    
+
     return mock_client
 
 
@@ -89,9 +90,9 @@ def sample_queries():
         "simple": "SELECT 1",
         "invalid": "SELECT FROM WHERE",
         "with_params": "SELECT * FROM table WHERE id = @id AND name = @name",
-        "public_dataset": "SELECT * FROM `bigquery-public-data.samples.shakespeare` LIMIT 10",
+        "public_dataset": ("SELECT * FROM `bigquery-public-data.samples.shakespeare` LIMIT 10"),
         "aggregation": """
-            SELECT 
+            SELECT
                 corpus,
                 COUNT(*) as count,
                 SUM(word_count) as total
@@ -100,14 +101,14 @@ def sample_queries():
         """,
         "cte": """
             WITH stats AS (
-                SELECT 
+                SELECT
                     word,
                     SUM(word_count) as total
                 FROM `bigquery-public-data.samples.shakespeare`
                 GROUP BY word
             )
-            SELECT * FROM stats WHERE total > 100
-        """
+            SELECT* FROM stats WHERE total > 100
+        """,
     }
 
 
@@ -126,9 +127,10 @@ def check_imports():
     """Automatically check critical imports before each test."""
     try:
         # These imports should always work
-        from google.auth.exceptions import DefaultCredentialsError
-        from google.cloud import bigquery
-        import mcp.server.stdio
-        from mcp_bigquery import __version__
+        import mcp.server.stdio  # noqa: F401
+        from google.auth.exceptions import DefaultCredentialsError  # noqa: F401
+        from google.cloud import bigquery  # noqa: F401
+
+        from mcp_bigquery import __version__  # noqa: F401
     except ImportError as e:
         pytest.skip(f"Required dependency not available: {e}")

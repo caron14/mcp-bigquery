@@ -1,7 +1,12 @@
 # mcp-bigquery
 
+![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)
 [![PyPI](https://img.shields.io/pypi/v/mcp-bigquery.svg)](https://pypi.org/project/mcp-bigquery/)
 ![PyPI - Downloads](https://img.shields.io/pypi/dd/mcp-bigquery)
+
+<p align="center">
+  <img src="docs/assets/images/logo.png" alt="mcp-bigquery logo" width="200">
+</p>
 
 The `mcp-bigquery` package provides a minimal MCP server for BigQuery SQL validation and dry-run analysis. This server provides exactly two tools for validating and analyzing BigQuery SQL queries without executing them.
 
@@ -283,11 +288,17 @@ mcp-bigquery
 
 ## License
 
-Apache-2.0
+MIT
 
 ## Changelog
 
-### 0.1.0 (2024-12-16)
+### 0.2.0 (2025-08-16)
+- Code quality improvements with pre-commit hooks
+- Enhanced development setup with Black, Ruff, isort, and mypy
+- Improved CI/CD pipeline
+- Documentation enhancements
+
+### 0.1.0 (2025-08-16)
 - Initial release
 - Renamed from mcp-bigquery-dryrun to mcp-bigquery
 - SQL validation tool (bq_validate_sql)
