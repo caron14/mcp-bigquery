@@ -73,6 +73,7 @@ plugins:
   - search
   - minify:
       minify_html: true
+  - social
 
 extra:
   social:
