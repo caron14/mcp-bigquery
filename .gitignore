@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Package managers
+pip-log.txt
+pip-delete-this-directory.txt
+.uv/
+
+# BigQuery credentials
+*.json
+!examples/claudecode.json
+!package.json
+!tsconfig.json
+
+# Logs
+*.log
+
+# Development files
+
+# Documentation drafts
+*.draft.md
+TODO.md
+NOTES.md
+
+# Local development
+local/
+scratch/
+tmp/
+CLAUDE.md
+
+# Backup files
+*.bak
+*.backup
+*.old

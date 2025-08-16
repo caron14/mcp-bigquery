@@ -1,0 +1,71 @@
+[project]
+name = "mcp-bigquery"
+version = "0.1.0"
+description = "Minimal MCP server for BigQuery SQL validation and dry-run analysis"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "caron14", email = "caron14@users.noreply.github.com"}
+]
+maintainers = [
+    {name = "caron14", email = "caron14@users.noreply.github.com"}
+]
+keywords = ["mcp", "bigquery", "sql", "validation", "dry-run", "gcp", "claude"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Database",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0",
+    "google-cloud-bigquery>=3.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/caron14/mcp-bigquery"
+Documentation = "https://github.com/caron14/mcp-bigquery#readme"
+Repository = "https://github.com/caron14/mcp-bigquery.git"
+Issues = "https://github.com/caron14/mcp-bigquery/issues"
+
+[project.scripts]
+mcp-bigquery = "mcp_bigquery.__main__:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "build>=1.0.0",
+    "twine>=4.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+include = [
+    "src/**/*.py",
+    "README.md",
+    "LICENSE",
+]
+exclude = [
+    "tests/",
+    "examples/",
+    "*.md",
+    "!README.md",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mcp_bigquery"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v"
