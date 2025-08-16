@@ -22,41 +22,21 @@ The `mcp-bigquery` package provides a Model Context Protocol (MCP) server that e
 
 ## Key Features
 
-<div class="grid cards" markdown>
+### ✅ SQL Validation
+Validate BigQuery SQL syntax without running queries. Catch errors early in your development workflow.
+[→ Validation Guide](usage.md#sql-validation)
 
--   :material-check-circle:{ .lg .middle } **SQL Validation**
+### 💰 Cost Estimation
+Get accurate cost estimates based on bytes processed. Optimize queries before execution.
+[→ Cost Estimation](usage.md#dry-run-analysis)
 
-    ---
+### 📊 Schema Preview
+Preview result schemas and referenced tables without accessing actual data.
+[→ Dry-Run Analysis](usage.md#dry-run-analysis)
 
-    Validate BigQuery SQL syntax without running queries. Catch errors early in your development workflow.
-
-    [:octicons-arrow-right-24: Validation Guide](usage.md#sql-validation)
-
--   :material-calculator:{ .lg .middle } **Cost Estimation**
-
-    ---
-
-    Get accurate cost estimates based on bytes processed. Optimize queries before execution.
-
-    [:octicons-arrow-right-24: Cost Estimation](usage.md#dry-run-analysis)
-
--   :material-table:{ .lg .middle } **Schema Preview**
-
-    ---
-
-    Preview result schemas and referenced tables without accessing actual data.
-
-    [:octicons-arrow-right-24: Dry-Run Analysis](usage.md#dry-run-analysis)
-
--   :material-code-tags:{ .lg .middle } **Parameter Support**
-
-    ---
-
-    Validate parameterized queries with full support for query parameters.
-
-    [:octicons-arrow-right-24: Using Parameters](usage.md#using-parameters)
-
-</div>
+### 🏷️ Parameter Support
+Validate parameterized queries with full support for query parameters.
+[→ Using Parameters](usage.md#using-parameters)
 
 ## Quick Example
 
@@ -146,25 +126,17 @@ uv pip install mcp-bigquery
 
 ## Documentation
 
-<div class="grid cards" markdown>
+### 🚀 [Installation](installation.md)
+Setup, authentication, and configuration
 
--   :material-rocket-launch:{ .lg .middle } **[Installation](installation.md)**
+### 📖 [Usage Guide](usage.md)
+SQL validation, dry-run analysis, and best practices
 
-    Setup, authentication, and configuration
+### 📋 [API Reference](api-reference.md)
+Complete tool documentation and schemas
 
--   :material-book-open-variant:{ .lg .middle } **[Usage Guide](usage.md)**
-
-    SQL validation, dry-run analysis, and best practices
-
--   :material-api:{ .lg .middle } **[API Reference](api-reference.md)**
-
-    Complete tool documentation and schemas
-
--   :material-code-braces:{ .lg .middle } **[Examples](examples.md)**
-
-    Real-world queries and patterns
-
-</div>
+### 💻 [Examples](examples.md)
+Real-world queries and patterns
 
 ## Support
 
