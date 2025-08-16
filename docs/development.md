@@ -34,9 +34,34 @@ gcloud auth application-default login
 export BQ_PROJECT="your-test-project"
 export BQ_LOCATION="US"
 
+# Install pre-commit hooks
+pre-commit install
+
 # Run development server
 python -m mcp_bigquery
 ```
+
+### Pre-commit Setup
+
+This project uses pre-commit hooks to ensure code quality:
+
+```bash
+# Install pre-commit hooks (one-time setup)
+pre-commit install
+
+# Run all hooks manually
+pre-commit run --all-files
+
+# Update hook versions
+pre-commit autoupdate
+```
+
+Configured hooks:
+- **isort**: Sorts Python imports
+- **black**: Formats Python code (line length: 100)
+- **flake8**: Checks Python code style
+- **ruff**: Fast Python linter
+- **mypy**: Type checking for Python
 
 ## Project Structure
 
