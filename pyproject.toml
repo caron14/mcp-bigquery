@@ -1,6 +1,6 @@
 [project]
 name = "mcp-bigquery"
-version = "0.2.1"
+version = "0.3.0"
 description = "Minimal MCP server for BigQuery SQL validation and dry-run analysis"
 readme = "README.md"
 license = {text = "MIT"}
@@ -26,6 +26,7 @@ requires-python = ">=3.10"
 dependencies = [
     "mcp>=1.0.0",
     "google-cloud-bigquery>=3.0.0",
+    "sqlparse>=0.4.0",
 ]
 
 [project.urls]
@@ -84,6 +85,8 @@ include = '\.pyi?$'
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+
+[tool.ruff.lint]
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -99,7 +102,7 @@ ignore = [
     "B905",  # zip() without an explicit strict= parameter
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # imported but unused
 
 # isort configuration
