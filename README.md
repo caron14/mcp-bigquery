@@ -8,7 +8,7 @@
   <img src="docs/assets/images/logo.png" alt="mcp-bigquery logo" width="200">
 </p>
 
-The `mcp-bigquery` package provides a minimal MCP server for BigQuery SQL validation and dry-run analysis. This server provides exactly two tools for validating and analyzing BigQuery SQL queries without executing them.
+The `mcp-bigquery` package provides a comprehensive MCP server for BigQuery SQL validation, dry-run analysis, and query structure analysis. This server provides five tools for validating, analyzing, and understanding BigQuery SQL queries without executing them.
 
 ** IMPORTANT: This server does NOT execute queries. All operations are dry-run only. Cost estimates are approximations based on bytes processed.**
 
@@ -16,6 +16,9 @@ The `mcp-bigquery` package provides a minimal MCP server for BigQuery SQL valida
 
 - **SQL Validation**: Check BigQuery SQL syntax without running queries
 - **Dry-Run Analysis**: Get cost estimates, referenced tables, and schema preview
+- **Query Structure Analysis**: Analyze SQL complexity, JOINs, CTEs, and query patterns
+- **Dependency Extraction**: Extract table and column dependencies from queries
+- **Enhanced Syntax Validation**: Detailed error reporting with suggestions
 - **Parameter Support**: Validate parameterized queries
 - **Cost Estimation**: Calculate USD estimates based on bytes processed
 
@@ -202,6 +205,107 @@ Perform a dry-run to get cost estimates and metadata without executing the query
 }
 ```
 
+### bq_analyze_query_structure
+
+Analyze BigQuery SQL query structure and complexity.
+
+**Input:**
+```json
+{
+  "sql": "SELECT u.name, COUNT(*) FROM users u LEFT JOIN orders o ON u.id = o.user_id GROUP BY u.name",
+  "params": {}  // Optional
+}
+```
+
+**Success Response:**
+```json
+{
+  "query_type": "SELECT",
+  "has_joins": true,
+  "has_subqueries": false,
+  "has_cte": false,
+  "has_aggregations": true,
+  "has_window_functions": false,
+  "has_union": false,
+  "table_count": 2,
+  "complexity_score": 15,
+  "join_types": ["LEFT"],
+  "functions_used": ["COUNT"]
+}
+```
+
+### bq_extract_dependencies
+
+Extract table and column dependencies from BigQuery SQL.
+
+**Input:**
+```json
+{
+  "sql": "SELECT u.name, u.email FROM users u WHERE u.created_at > '2023-01-01'",
+  "params": {}  // Optional
+}
+```
+
+**Success Response:**
+```json
+{
+  "tables": [
+    {
+      "project": null,
+      "dataset": "users",
+      "table": "u",
+      "full_name": "users.u"
+    }
+  ],
+  "columns": ["created_at", "email", "name"],
+  "dependency_graph": {
+    "users.u": ["created_at", "email", "name"]
+  },
+  "table_count": 1,
+  "column_count": 3
+}
+```
+
+### bq_validate_query_syntax
+
+Enhanced syntax validation with detailed error reporting.
+
+**Input:**
+```json
+{
+  "sql": "SELECT * FROM users WHERE name = 'John' LIMIT 10",
+  "params": {}  // Optional
+}
+```
+
+**Success Response:**
+```json
+{
+  "is_valid": true,
+  "issues": [
+    {
+      "type": "performance",
+      "message": "SELECT * may impact performance - consider specifying columns",
+      "severity": "warning"
+    },
+    {
+      "type": "consistency",
+      "message": "LIMIT without ORDER BY may return inconsistent results",
+      "severity": "warning"
+    }
+  ],
+  "suggestions": [
+    "Specify exact columns needed instead of using SELECT *",
+    "Add ORDER BY clause before LIMIT for consistent results"
+  ],
+  "bigquery_specific": {
+    "uses_legacy_sql": false,
+    "has_array_syntax": false,
+    "has_struct_syntax": false
+  }
+}
+```
+
 ## Examples
 
 ### Validate a Simple Query
@@ -254,6 +358,56 @@ Perform a dry-run to get cost estimates and metadata without executing the query
 }
 ```
 
+### Analyze Query Structure
+
+```python
+# Tool: bq_analyze_query_structure
+{
+  "sql": """
+    WITH ranked_products AS (
+      SELECT 
+        p.name,
+        p.price,
+        ROW_NUMBER() OVER (PARTITION BY p.category ORDER BY p.price DESC) as rank
+      FROM products p
+      JOIN categories c ON p.category_id = c.id
+    )
+    SELECT * FROM ranked_products WHERE rank <= 3
+  """
+}
+# Returns: Complex query analysis with CTE, window functions, and JOINs
+```
+
+### Extract Query Dependencies
+
+```python
+# Tool: bq_extract_dependencies
+{
+  "sql": "SELECT u.name, u.email, o.total FROM users u LEFT JOIN orders o ON u.id = o.user_id"
+}
+# Returns: Tables (users, orders) and columns (name, email, total, id, user_id)
+```
+
+### Enhanced Syntax Validation
+
+```python
+# Tool: bq_validate_query_syntax
+{
+  "sql": "SELECT * FROM users WHERE name = 'John' LIMIT 10"
+}
+# Returns: Validation with performance warnings and suggestions
+```
+
+### Validate BigQuery-Specific Syntax
+
+```python
+# Tool: bq_validate_query_syntax
+{
+  "sql": "SELECT ARRAY[1, 2, 3] as numbers, STRUCT('John' as name, 25 as age) as person"
+}
+# Returns: Validation recognizing BigQuery ARRAY and STRUCT syntax
+```
+
 ## Testing
 
 Run tests with pytest:
@@ -291,6 +445,16 @@ mcp-bigquery
 MIT
 
 ## Changelog
+
+### 0.3.0 (2025-08-17)
+- **NEW TOOLS**: Added three new SQL analysis tools for comprehensive query analysis
+- **bq_analyze_query_structure**: Analyze SQL complexity, JOINs, CTEs, window functions, and calculate complexity scores
+- **bq_extract_dependencies**: Extract table and column dependencies with dependency graph mapping
+- **bq_validate_query_syntax**: Enhanced syntax validation with detailed error reporting and suggestions
+- **SQL Analysis Engine**: New SQLAnalyzer class with comprehensive BigQuery SQL parsing capabilities
+- **BigQuery-Specific Features**: Detection of ARRAY/STRUCT syntax, legacy SQL patterns, and BigQuery-specific validation
+- **Backward Compatibility**: All existing tools (bq_validate_sql, bq_dry_run_sql) remain unchanged
+- **Enhanced Documentation**: Updated with comprehensive examples for all five tools
 
 ### 0.2.1 (2025-08-16)
 - Fixed GitHub Pages documentation layout issues
