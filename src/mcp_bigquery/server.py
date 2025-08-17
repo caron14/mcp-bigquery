@@ -4,7 +4,7 @@ import asyncio
 import json
 import os
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import mcp.server.stdio
 import mcp.types as types
@@ -14,11 +14,12 @@ from mcp.server import NotificationOptions, Server
 
 from . import __version__
 from .bigquery_client import get_bigquery_client
+from .sql_analyzer import SQLAnalyzer
 
 server = Server("mcp-bigquery")
 
 
-def extract_error_location(error_message: str) -> Optional[Dict[str, int]]:
+def extract_error_location(error_message: str) -> dict[str, int] | None:
     """
     Extract line and column from BigQuery error message.
 
@@ -36,7 +37,7 @@ def extract_error_location(error_message: str) -> Optional[Dict[str, int]]:
     return None
 
 
-def build_query_parameters(params: Optional[Dict[str, Any]]) -> List[bigquery.ScalarQueryParameter]:
+def build_query_parameters(params: dict[str, Any] | None) -> list[bigquery.ScalarQueryParameter]:
     """
     Build BigQuery query parameters from a dictionary.
 
@@ -106,6 +107,63 @@ async def handle_list_tools() -> list[types.Tool]:
                 "required": ["sql"],
             },
         ),
+        types.Tool(
+            name="bq_analyze_query_structure",
+            description=("Analyze BigQuery SQL query structure and complexity"),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "sql": {
+                        "type": "string",
+                        "description": "The SQL query to analyze",
+                    },
+                    "params": {
+                        "type": "object",
+                        "description": ("Optional query parameters (key-value pairs)"),
+                        "additionalProperties": True,
+                    },
+                },
+                "required": ["sql"],
+            },
+        ),
+        types.Tool(
+            name="bq_extract_dependencies",
+            description=("Extract table and column dependencies from BigQuery SQL"),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "sql": {
+                        "type": "string",
+                        "description": "The SQL query to analyze",
+                    },
+                    "params": {
+                        "type": "object",
+                        "description": ("Optional query parameters (key-value pairs)"),
+                        "additionalProperties": True,
+                    },
+                },
+                "required": ["sql"],
+            },
+        ),
+        types.Tool(
+            name="bq_validate_query_syntax",
+            description=("Enhanced syntax validation with detailed error reporting"),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "sql": {
+                        "type": "string",
+                        "description": "The SQL query to validate",
+                    },
+                    "params": {
+                        "type": "object",
+                        "description": ("Optional query parameters (key-value pairs)"),
+                        "additionalProperties": True,
+                    },
+                },
+                "required": ["sql"],
+            },
+        ),
     ]
 
 
@@ -127,11 +185,23 @@ async def handle_call_tool(
         )
         return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
 
+    elif name == "bq_analyze_query_structure":
+        result = await analyze_query_structure(sql=arguments["sql"], params=arguments.get("params"))
+        return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    elif name == "bq_extract_dependencies":
+        result = await extract_dependencies(sql=arguments["sql"], params=arguments.get("params"))
+        return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    elif name == "bq_validate_query_syntax":
+        result = await validate_query_syntax(sql=arguments["sql"], params=arguments.get("params"))
+        return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
+
     else:
         raise ValueError(f"Unknown tool: {name}")
 
 
-async def validate_sql(sql: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+async def validate_sql(sql: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
     """
     Validate BigQuery SQL syntax using dry-run.
 
@@ -180,9 +250,9 @@ async def validate_sql(sql: str, params: Optional[Dict[str, Any]] = None) -> Dic
 
 async def dry_run_sql(
     sql: str,
-    params: Optional[Dict[str, Any]] = None,
-    price_per_tib: Optional[float] = None,
-) -> Dict[str, Any]:
+    params: dict[str, Any] | None = None,
+    price_per_tib: float | None = None,
+) -> dict[str, Any]:
     """
     Perform a dry-run of a BigQuery SQL query.
 
@@ -258,6 +328,82 @@ async def dry_run_sql(
 
     except Exception as e:
         return {"error": {"code": "UNKNOWN_ERROR", "message": str(e)}}
+
+
+async def analyze_query_structure(sql: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+    """
+    Analyze BigQuery SQL query structure and complexity.
+
+    Args:
+        sql: The SQL query to analyze
+        params: Optional query parameters (not used in static analysis)
+
+    Returns:
+        Dict with structure analysis including query type, complexity score,
+        and feature detection
+    """
+    try:
+        analyzer = SQLAnalyzer(sql)
+        result = analyzer.analyze_structure()
+        return result
+
+    except Exception as e:
+        return {
+            "error": {
+                "code": "ANALYSIS_ERROR",
+                "message": f"Failed to analyze query structure: {str(e)}",
+            }
+        }
+
+
+async def extract_dependencies(sql: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+    """
+    Extract table and column dependencies from BigQuery SQL.
+
+    Args:
+        sql: The SQL query to analyze
+        params: Optional query parameters (not used in static analysis)
+
+    Returns:
+        Dict with tables, columns, and dependency graph information
+    """
+    try:
+        analyzer = SQLAnalyzer(sql)
+        result = analyzer.extract_dependencies()
+        return result
+
+    except Exception as e:
+        return {
+            "error": {
+                "code": "ANALYSIS_ERROR",
+                "message": f"Failed to extract dependencies: {str(e)}",
+            }
+        }
+
+
+async def validate_query_syntax(sql: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+    """
+    Enhanced syntax validation with detailed error reporting.
+
+    Args:
+        sql: The SQL query to validate
+        params: Optional query parameters (not used in static analysis)
+
+    Returns:
+        Dict with validation results, issues, and suggestions
+    """
+    try:
+        analyzer = SQLAnalyzer(sql)
+        result = analyzer.validate_syntax_enhanced()
+        return result
+
+    except Exception as e:
+        return {
+            "error": {
+                "code": "ANALYSIS_ERROR",
+                "message": f"Failed to validate query syntax: {str(e)}",
+            }
+        }
 
 
 async def main():
