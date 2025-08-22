@@ -522,15 +522,15 @@ class TestInfoSchema:
     @pytest.mark.asyncio
     async def test_query_info_schema_invalid_type(self):
         """Test INFORMATION_SCHEMA query with invalid type."""
-        result = await query_info_schema("invalid_type", "test_dataset")
+        with patch("mcp_bigquery.info_schema.get_bigquery_client") as mock_get_client:
+            mock_client = MagicMock()
+            mock_get_client.return_value = mock_client
 
-        assert "error" in result
-        # Accept both error codes since it depends on where the error occurs
-        assert result["error"]["code"] in ["INVALID_QUERY_TYPE", "INFO_SCHEMA_ERROR"]
-        assert (
-            "invalid_type" in result["error"]["message"].lower()
-            or "invalid" in result["error"]["message"].lower()
-        )
+            result = await query_info_schema("invalid_type", "test_dataset")
+
+            assert "error" in result
+            assert result["error"]["code"] == "INVALID_QUERY_TYPE"
+            assert "invalid_type" in result["error"]["message"]
 
     @pytest.mark.asyncio
     async def test_analyze_query_performance_simple(self):
