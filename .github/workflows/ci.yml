@@ -52,7 +52,4 @@ jobs:
         pip install -e ".[dev]"
 
     - name: Run unit tests (no credentials required)
-      run: pytest tests/test_min.py::TestWithoutCredentials -v
-
-    - name: Run import tests
-      run: pytest tests/test_imports.py -v
+      run: pytest tests/test_features.py tests/test_imports.py -v
