@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import logging
 import os
 import re
 from typing import Any
@@ -17,6 +18,13 @@ from .bigquery_client import get_bigquery_client
 from .info_schema import analyze_query_performance, query_info_schema
 from .schema_explorer import describe_table, get_table_info, list_datasets, list_tables
 from .sql_analyzer import SQLAnalyzer
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO if os.environ.get("DEBUG") else logging.WARNING,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 server = Server("mcp-bigquery")
 
@@ -61,6 +69,7 @@ def build_query_parameters(params: dict[str, Any] | None) -> list[bigquery.Scala
 
 @server.list_tools()
 async def handle_list_tools() -> list[types.Tool]:
+    logger.debug("Listing available tools")
     """List available MCP tools."""
     return [
         types.Tool(
@@ -320,6 +329,8 @@ async def handle_call_tool(
     name: str, arguments: dict
 ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
     """Handle tool execution requests."""
+    logger.info(f"Executing tool: {name}")
+    logger.debug(f"Tool arguments: {arguments}")
 
     if name == "bq_validate_sql":
         result = await validate_sql(sql=arguments["sql"], params=arguments.get("params"))
@@ -409,6 +420,11 @@ async def validate_sql(sql: str, params: dict[str, Any] | None = None) -> dict[s
     Returns:
         Dict with 'isValid' boolean and optional 'error' details
     """
+    logger.debug(
+        f"Validating SQL query: {sql[:100]}..."
+        if len(sql) > 100
+        else f"Validating SQL query: {sql}"
+    )
     try:
         client = get_bigquery_client()
 
@@ -420,10 +436,12 @@ async def validate_sql(sql: str, params: dict[str, Any] | None = None) -> dict[s
 
         client.query(sql, job_config=job_config)
 
+        logger.info("SQL validation successful")
         return {"isValid": True}
 
     except BadRequest as e:
         error_msg = str(e)
+        logger.warning(f"SQL validation failed: {error_msg}")
         error_result = {
             "isValid": False,
             "error": {"code": "INVALID_SQL", "message": error_msg},
@@ -516,7 +534,19 @@ async def dry_run_sql(
 
     except BadRequest as e:
         error_msg = str(e)
+        # Improve error message clarity
+        if "Table not found" in error_msg:
+            error_msg = (
+                f"Table not found. {error_msg}. Please verify the table exists and you have access."
+            )
+        elif "Column not found" in error_msg:
+            error_msg = f"Column not found. {error_msg}. Please check column names and spelling."
+
         error_result = {"error": {"code": "INVALID_SQL", "message": error_msg}}
+
+        location = extract_error_location(error_msg)
+        if location:
+            error_result["error"]["location"] = location
 
         if hasattr(e, "errors") and e.errors:
             error_result["error"]["details"] = e.errors
@@ -524,7 +554,14 @@ async def dry_run_sql(
         return error_result
 
     except Exception as e:
-        return {"error": {"code": "UNKNOWN_ERROR", "message": str(e)}}
+        # Provide more context for common errors
+        error_msg = str(e)
+        if "credentials" in error_msg.lower():
+            error_msg = f"Authentication error: {error_msg}. Please run 'gcloud auth application-default login' to set up credentials."
+        elif "permission" in error_msg.lower():
+            error_msg = f"Permission denied: {error_msg}. Please verify you have the necessary BigQuery permissions."
+
+        return {"error": {"code": "UNKNOWN_ERROR", "message": error_msg}}
 
 
 async def analyze_query_structure(sql: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
