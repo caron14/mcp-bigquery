@@ -91,6 +91,7 @@ export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account-key.json
 | `BQ_PROJECT` | GCP project ID | From ADC |
 | `BQ_LOCATION` | BigQuery location (e.g., US, EU, asia-northeast1) | None |
 | `SAFE_PRICE_PER_TIB` | Default price per TiB for cost estimation | 5.0 |
+| `DEBUG` | Enable debug logging (set to any value) | None |
 
 #### Claude Code Integration
 
@@ -811,6 +812,14 @@ mcp-bigquery
 MIT
 
 ## Changelog
+
+### 0.4.1 (2025-08-22)
+- **Stability Improvements**: Enhanced error handling and input validation
+- **Better Error Messages**: More informative error messages with troubleshooting guidance
+- **Input Validation**: Added comprehensive parameter validation for all schema explorer functions
+- **Logging Support**: Added debug logging (enable with DEBUG environment variable)
+- **Test Coverage**: All 47 tests passing with improved test reliability
+- **Documentation**: Updated with v0.4.1 improvements and troubleshooting tips
 
 ### 0.4.0 (2025-08-22)
 - **MAJOR FEATURE**: Added comprehensive schema discovery and metadata exploration
