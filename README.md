@@ -8,19 +8,31 @@
   <img src="docs/assets/images/logo.png" alt="mcp-bigquery logo" width="200">
 </p>
 
-The `mcp-bigquery` package provides a comprehensive MCP server for BigQuery SQL validation, dry-run analysis, and query structure analysis. This server provides five tools for validating, analyzing, and understanding BigQuery SQL queries without executing them.
+The `mcp-bigquery` package provides a comprehensive MCP server for BigQuery SQL validation, dry-run analysis, query structure analysis, and schema discovery. This server provides eleven tools for validating, analyzing, understanding BigQuery SQL queries, and exploring BigQuery schemas without executing queries.
 
 ** IMPORTANT: This server does NOT execute queries. All operations are dry-run only. Cost estimates are approximations based on bytes processed.**
 
 ## Features
 
+### SQL Analysis & Validation
 - **SQL Validation**: Check BigQuery SQL syntax without running queries
 - **Dry-Run Analysis**: Get cost estimates, referenced tables, and schema preview
 - **Query Structure Analysis**: Analyze SQL complexity, JOINs, CTEs, and query patterns
 - **Dependency Extraction**: Extract table and column dependencies from queries
 - **Enhanced Syntax Validation**: Detailed error reporting with suggestions
+- **Performance Analysis**: Query performance scoring and optimization suggestions
+
+### Schema Discovery & Metadata (v0.4.0)
+- **Dataset Explorer**: List and explore datasets in your BigQuery project
+- **Table Browser**: Browse tables with metadata, partitioning, and clustering info
+- **Schema Inspector**: Get detailed table schemas with nested field support
+- **INFORMATION_SCHEMA Access**: Safe querying of BigQuery metadata views
+- **Comprehensive Table Info**: Access all table metadata including encryption and time travel
+
+### Additional Features
 - **Parameter Support**: Validate parameterized queries
 - **Cost Estimation**: Calculate USD estimates based on bytes processed
+- **Safe Operations**: All operations are dry-run only, no query execution
 
 ## Quick Start
 
@@ -306,6 +318,305 @@ Enhanced syntax validation with detailed error reporting.
 }
 ```
 
+### bq_list_datasets
+
+List all datasets in the BigQuery project.
+
+**Input:**
+```json
+{
+  "project_id": "my-project",  // Optional, uses default if not provided
+  "max_results": 100  // Optional
+}
+```
+
+**Success Response:**
+```json
+{
+  "project": "my-project",
+  "dataset_count": 2,
+  "datasets": [
+    {
+      "dataset_id": "analytics",
+      "project": "my-project",
+      "location": "US",
+      "created": "2024-01-01T00:00:00",
+      "modified": "2024-06-01T00:00:00",
+      "description": "Analytics data",
+      "labels": {"env": "production"},
+      "default_table_expiration_ms": null,
+      "default_partition_expiration_ms": null
+    }
+  ]
+}
+```
+
+### bq_list_tables
+
+List all tables in a BigQuery dataset with metadata.
+
+**Input:**
+```json
+{
+  "dataset_id": "analytics",
+  "project_id": "my-project",  // Optional
+  "max_results": 100,  // Optional
+  "table_type_filter": ["TABLE", "VIEW"]  // Optional: TABLE, VIEW, EXTERNAL, MATERIALIZED_VIEW
+}
+```
+
+**Success Response:**
+```json
+{
+  "dataset_id": "analytics",
+  "project": "my-project",
+  "table_count": 3,
+  "tables": [
+    {
+      "table_id": "users",
+      "dataset_id": "analytics",
+      "project": "my-project",
+      "table_type": "TABLE",
+      "created": "2024-01-15T00:00:00",
+      "modified": "2024-06-20T00:00:00",
+      "description": "User data table",
+      "labels": {},
+      "num_bytes": 1048576,
+      "num_rows": 10000,
+      "location": "US",
+      "partitioning": {
+        "type": "DAY",
+        "field": "created_at",
+        "expiration_ms": null
+      },
+      "clustering_fields": ["user_id"]
+    }
+  ]
+}
+```
+
+### bq_describe_table
+
+Get table schema, metadata, and statistics.
+
+**Input:**
+```json
+{
+  "table_id": "users",
+  "dataset_id": "analytics",
+  "project_id": "my-project",  // Optional
+  "format_output": false  // Optional: format schema as table
+}
+```
+
+**Success Response:**
+```json
+{
+  "table_id": "users",
+  "dataset_id": "analytics",
+  "project": "my-project",
+  "table_type": "TABLE",
+  "schema": [
+    {
+      "name": "user_id",
+      "type": "INTEGER",
+      "mode": "REQUIRED",
+      "description": "Unique user identifier"
+    },
+    {
+      "name": "name",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "User full name"
+    },
+    {
+      "name": "address",
+      "type": "RECORD",
+      "mode": "NULLABLE",
+      "description": "User address",
+      "fields": [
+        {
+          "name": "street",
+          "type": "STRING",
+          "mode": "NULLABLE",
+          "description": "Street address"
+        },
+        {
+          "name": "city",
+          "type": "STRING",
+          "mode": "NULLABLE",
+          "description": "City"
+        }
+      ]
+    }
+  ],
+  "description": "User data table",
+  "created": "2024-01-15T00:00:00",
+  "modified": "2024-06-20T00:00:00",
+  "statistics": {
+    "num_bytes": 1048576,
+    "num_rows": 10000,
+    "num_long_term_bytes": 524288
+  },
+  "partitioning": {
+    "type": "DAY",
+    "field": "created_at"
+  },
+  "clustering_fields": ["user_id"]
+}
+```
+
+### bq_get_table_info
+
+Get comprehensive table information including all metadata.
+
+**Input:**
+```json
+{
+  "table_id": "users",
+  "dataset_id": "analytics",
+  "project_id": "my-project"  // Optional
+}
+```
+
+**Success Response:**
+```json
+{
+  "table_id": "users",
+  "dataset_id": "analytics",
+  "project": "my-project",
+  "full_table_id": "my-project.analytics.users",
+  "table_type": "TABLE",
+  "created": "2024-01-15T00:00:00",
+  "modified": "2024-06-20T00:00:00",
+  "expires": null,
+  "description": "User data table",
+  "labels": {"team": "analytics"},
+  "location": "US",
+  "self_link": "https://bigquery.googleapis.com/...",
+  "etag": "abc123",
+  "friendly_name": "User Table",
+  "statistics": {
+    "creation_time": "2024-01-15T00:00:00",
+    "num_bytes": 1048576,
+    "num_rows": 10000,
+    "num_active_logical_bytes": 786432,
+    "num_long_term_logical_bytes": 262144
+  },
+  "time_travel": {
+    "max_time_travel_hours": 168
+  },
+  "partitioning": {
+    "type": "DAY",
+    "time_partitioning": {
+      "type": "DAY",
+      "field": "created_at",
+      "require_partition_filter": false
+    }
+  },
+  "clustering": {
+    "fields": ["user_id"]
+  }
+}
+```
+
+### bq_query_info_schema
+
+Query INFORMATION_SCHEMA views for metadata.
+
+**Input:**
+```json
+{
+  "query_type": "columns",  // tables, columns, table_storage, partitions, views, routines, custom
+  "dataset_id": "analytics",
+  "project_id": "my-project",  // Optional
+  "table_filter": "users",  // Optional
+  "limit": 100  // Optional
+}
+```
+
+**Success Response:**
+```json
+{
+  "query_type": "columns",
+  "dataset_id": "analytics",
+  "project": "my-project",
+  "query": "SELECT ... FROM `my-project.analytics.INFORMATION_SCHEMA.COLUMNS` ...",
+  "schema": [
+    {
+      "name": "table_name",
+      "type": "STRING",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "column_name",
+      "type": "STRING",
+      "mode": "NULLABLE"
+    }
+  ],
+  "metadata": {
+    "total_bytes_processed": 1024,
+    "estimated_cost_usd": 0.000005,
+    "cache_hit": false
+  },
+  "info": "Query validated successfully. Execute without dry_run to get actual results."
+}
+```
+
+### bq_analyze_query_performance
+
+Analyze query performance and provide optimization suggestions.
+
+**Input:**
+```json
+{
+  "sql": "SELECT * FROM large_table WHERE date > '2024-01-01'",
+  "project_id": "my-project"  // Optional
+}
+```
+
+**Success Response:**
+```json
+{
+  "query_analysis": {
+    "bytes_processed": 107374182400,
+    "bytes_billed": 107374182400,
+    "gigabytes_processed": 100.0,
+    "estimated_cost_usd": 0.5,
+    "referenced_tables": [
+      {
+        "project": "my-project",
+        "dataset": "analytics",
+        "table": "large_table",
+        "full_id": "my-project.analytics.large_table"
+      }
+    ],
+    "table_count": 1
+  },
+  "performance_score": 65,
+  "performance_rating": "GOOD",
+  "optimization_suggestions": [
+    {
+      "type": "SELECT_STAR",
+      "severity": "MEDIUM",
+      "message": "Query uses SELECT * which processes all columns",
+      "recommendation": "Select only the columns you need to reduce data processed"
+    },
+    {
+      "type": "HIGH_DATA_SCAN",
+      "severity": "HIGH",
+      "message": "Query will process 100.0 GB of data",
+      "recommendation": "Consider adding WHERE clauses, using partitioning, or limiting date ranges"
+    }
+  ],
+  "suggestion_count": 2,
+  "estimated_execution": {
+    "note": "Actual execution time depends on cluster resources and current load",
+    "complexity_indicator": "HIGH"
+  }
+}
+```
+
 ## Examples
 
 ### Validate a Simple Query
@@ -410,14 +721,69 @@ Enhanced syntax validation with detailed error reporting.
 
 ## Testing
 
-Run tests with pytest:
+### Test Organization
+
+The test suite is organized into multiple files:
+- `test_features.py` - Comprehensive tests for all MCP tools and features (no credentials required)
+- `test_min.py` - Minimal tests that require BigQuery credentials
+- `test_integration.py` - Integration tests with real BigQuery API
+- `test_imports.py` - Import and package structure validation
+
+### Running Tests
 
 ```bash
-# Run all tests (requires BigQuery credentials)
+# Install test dependencies
+uv pip install -e ".[dev]"
+
+# Run all tests
 pytest tests/
 
-# Run only tests that don't require credentials
-pytest tests/test_min.py::TestWithoutCredentials
+# Run tests with coverage report
+pytest --cov=mcp_bigquery --cov-report=term-missing tests/
+
+# Run specific test files
+pytest tests/test_features.py  # No credentials required
+pytest tests/test_min.py       # Requires BigQuery credentials
+
+# Run tests matching a pattern
+pytest tests/ -k "test_list_datasets"
+
+# Run with verbose output
+pytest tests/ -v
+```
+
+### Test Coverage
+
+Current test coverage: **75%**
+
+```bash
+# Generate HTML coverage report
+pytest --cov=mcp_bigquery --cov-report=html tests/
+# Open htmlcov/index.html in browser
+
+# Show coverage for specific modules
+pytest --cov=mcp_bigquery.server tests/
+```
+
+### Testing Without Credentials
+
+Many tests use mocks and don't require BigQuery credentials:
+
+```bash
+# Run only mock-based tests
+pytest tests/test_features.py
+```
+
+### Testing With Credentials
+
+For integration tests, set up Google Cloud authentication:
+
+```bash
+# Set up Application Default Credentials
+gcloud auth application-default login
+
+# Run integration tests
+pytest tests/test_integration.py
 ```
 
 ## Development
@@ -445,6 +811,19 @@ mcp-bigquery
 MIT
 
 ## Changelog
+
+### 0.4.0-dev (In Development)
+- **MAJOR FEATURE**: Added comprehensive schema discovery and metadata exploration
+- **NEW TOOLS**: Six new tools for BigQuery schema and metadata operations
+- **bq_list_datasets**: List all datasets in the project with metadata
+- **bq_list_tables**: Browse tables with partitioning and clustering information
+- **bq_describe_table**: Get detailed table schemas including nested fields
+- **bq_get_table_info**: Access comprehensive table metadata and statistics
+- **bq_query_info_schema**: Safe querying of INFORMATION_SCHEMA views
+- **bq_analyze_query_performance**: Query performance analysis with optimization suggestions
+- **Dependencies**: Added `tabulate` for enhanced table formatting
+- **Backward Compatibility**: All existing tools remain unchanged
+- **Testing**: Comprehensive test coverage for all new features
 
 ### 0.3.0 (2025-08-17)
 - **NEW TOOLS**: Added three new SQL analysis tools for comprehensive query analysis

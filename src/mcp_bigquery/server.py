@@ -14,6 +14,8 @@ from mcp.server import NotificationOptions, Server
 
 from . import __version__
 from .bigquery_client import get_bigquery_client
+from .info_schema import analyze_query_performance, query_info_schema
+from .schema_explorer import describe_table, get_table_info, list_datasets, list_tables
 from .sql_analyzer import SQLAnalyzer
 
 server = Server("mcp-bigquery")
@@ -164,6 +166,152 @@ async def handle_list_tools() -> list[types.Tool]:
                 "required": ["sql"],
             },
         ),
+        types.Tool(
+            name="bq_list_datasets",
+            description=("List all datasets in the BigQuery project"),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "string",
+                        "description": "GCP project ID (uses default if not provided)",
+                    },
+                    "max_results": {
+                        "type": "integer",
+                        "description": "Maximum number of datasets to return",
+                    },
+                },
+            },
+        ),
+        types.Tool(
+            name="bq_list_tables",
+            description=("List all tables in a BigQuery dataset with metadata"),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "dataset_id": {
+                        "type": "string",
+                        "description": "The dataset ID",
+                    },
+                    "project_id": {
+                        "type": "string",
+                        "description": "GCP project ID (uses default if not provided)",
+                    },
+                    "max_results": {
+                        "type": "integer",
+                        "description": "Maximum number of tables to return",
+                    },
+                    "table_type_filter": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Filter by table types (TABLE, VIEW, EXTERNAL, MATERIALIZED_VIEW)",
+                    },
+                },
+                "required": ["dataset_id"],
+            },
+        ),
+        types.Tool(
+            name="bq_describe_table",
+            description=("Get table schema, metadata, and statistics"),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "table_id": {
+                        "type": "string",
+                        "description": "The table ID",
+                    },
+                    "dataset_id": {
+                        "type": "string",
+                        "description": "The dataset ID",
+                    },
+                    "project_id": {
+                        "type": "string",
+                        "description": "GCP project ID (uses default if not provided)",
+                    },
+                    "format_output": {
+                        "type": "boolean",
+                        "description": "Whether to format schema as table string",
+                    },
+                },
+                "required": ["table_id", "dataset_id"],
+            },
+        ),
+        types.Tool(
+            name="bq_get_table_info",
+            description=(
+                "Get comprehensive table information including partitioning and clustering"
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "table_id": {
+                        "type": "string",
+                        "description": "The table ID",
+                    },
+                    "dataset_id": {
+                        "type": "string",
+                        "description": "The dataset ID",
+                    },
+                    "project_id": {
+                        "type": "string",
+                        "description": "GCP project ID (uses default if not provided)",
+                    },
+                },
+                "required": ["table_id", "dataset_id"],
+            },
+        ),
+        types.Tool(
+            name="bq_query_info_schema",
+            description=("Query INFORMATION_SCHEMA views for metadata"),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query_type": {
+                        "type": "string",
+                        "description": "Type of query (tables, columns, table_storage, partitions, views, routines, custom)",
+                    },
+                    "dataset_id": {
+                        "type": "string",
+                        "description": "The dataset to query metadata for",
+                    },
+                    "project_id": {
+                        "type": "string",
+                        "description": "GCP project ID (uses default if not provided)",
+                    },
+                    "table_filter": {
+                        "type": "string",
+                        "description": "Optional table name filter",
+                    },
+                    "custom_query": {
+                        "type": "string",
+                        "description": "Custom INFORMATION_SCHEMA query (when query_type is 'custom')",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum number of results (default: 100)",
+                    },
+                },
+                "required": ["query_type", "dataset_id"],
+            },
+        ),
+        types.Tool(
+            name="bq_analyze_query_performance",
+            description=("Analyze query performance and provide optimization suggestions"),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "sql": {
+                        "type": "string",
+                        "description": "The SQL query to analyze",
+                    },
+                    "project_id": {
+                        "type": "string",
+                        "description": "GCP project ID (uses default if not provided)",
+                    },
+                },
+                "required": ["sql"],
+            },
+        ),
     ]
 
 
@@ -195,6 +343,55 @@ async def handle_call_tool(
 
     elif name == "bq_validate_query_syntax":
         result = await validate_query_syntax(sql=arguments["sql"], params=arguments.get("params"))
+        return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    elif name == "bq_list_datasets":
+        result = await list_datasets(
+            project_id=arguments.get("project_id"), max_results=arguments.get("max_results")
+        )
+        return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    elif name == "bq_list_tables":
+        result = await list_tables(
+            dataset_id=arguments["dataset_id"],
+            project_id=arguments.get("project_id"),
+            max_results=arguments.get("max_results"),
+            table_type_filter=arguments.get("table_type_filter"),
+        )
+        return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    elif name == "bq_describe_table":
+        result = await describe_table(
+            table_id=arguments["table_id"],
+            dataset_id=arguments["dataset_id"],
+            project_id=arguments.get("project_id"),
+            format_output=arguments.get("format_output", False),
+        )
+        return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    elif name == "bq_get_table_info":
+        result = await get_table_info(
+            table_id=arguments["table_id"],
+            dataset_id=arguments["dataset_id"],
+            project_id=arguments.get("project_id"),
+        )
+        return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    elif name == "bq_query_info_schema":
+        result = await query_info_schema(
+            query_type=arguments["query_type"],
+            dataset_id=arguments["dataset_id"],
+            project_id=arguments.get("project_id"),
+            table_filter=arguments.get("table_filter"),
+            custom_query=arguments.get("custom_query"),
+            limit=arguments.get("limit", 100),
+        )
+        return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    elif name == "bq_analyze_query_performance":
+        result = await analyze_query_performance(
+            sql=arguments["sql"], project_id=arguments.get("project_id")
+        )
         return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
 
     else:

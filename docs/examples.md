@@ -320,6 +320,153 @@ for expected in expected_schema:
         raise Exception(f"Type mismatch for {expected['name']}")
 ```
 
+## Schema Discovery Examples
+
+### 1. Explore Available Datasets
+
+```json
+{
+  "tool": "bq_list_datasets",
+  "arguments": {
+    "project_id": "bigquery-public-data",
+    "max_results": 5
+  }
+}
+```
+
+Response shows available datasets:
+```json
+{
+  "project": "bigquery-public-data",
+  "dataset_count": 5,
+  "datasets": [
+    {
+      "dataset_id": "samples",
+      "location": "US",
+      "description": "Sample datasets for BigQuery"
+    }
+  ]
+}
+```
+
+### 2. Browse Tables in Dataset
+
+```json
+{
+  "tool": "bq_list_tables",
+  "arguments": {
+    "dataset_id": "samples",
+    "project_id": "bigquery-public-data",
+    "table_type_filter": ["TABLE"]
+  }
+}
+```
+
+### 3. Get Table Schema Details
+
+```json
+{
+  "tool": "bq_describe_table",
+  "arguments": {
+    "table_id": "shakespeare",
+    "dataset_id": "samples",
+    "project_id": "bigquery-public-data",
+    "format_output": true
+  }
+}
+```
+
+### 4. Query INFORMATION_SCHEMA
+
+Get column metadata:
+```json
+{
+  "tool": "bq_query_info_schema",
+  "arguments": {
+    "query_type": "columns",
+    "dataset_id": "samples",
+    "project_id": "bigquery-public-data",
+    "table_filter": "shakespeare"
+  }
+}
+```
+
+## Performance Analysis Examples
+
+### 1. Analyze Query Performance
+
+```json
+{
+  "tool": "bq_analyze_query_performance",
+  "arguments": {
+    "sql": "SELECT * FROM `bigquery-public-data.samples.shakespeare` WHERE word_count > 100"
+  }
+}
+```
+
+Response with optimization suggestions:
+```json
+{
+  "performance_score": 75,
+  "performance_rating": "GOOD",
+  "optimization_suggestions": [
+    {
+      "type": "SELECT_STAR",
+      "severity": "MEDIUM",
+      "recommendation": "Select only needed columns instead of *"
+    }
+  ],
+  "query_analysis": {
+    "bytes_processed": 2654199,
+    "estimated_cost_usd": 0.000013
+  }
+}
+```
+
+### 2. Compare Query Variations
+
+Original query:
+```json
+{
+  "tool": "bq_analyze_query_performance",
+  "arguments": {
+    "sql": "SELECT * FROM large_table"
+  }
+}
+```
+
+Optimized query:
+```json
+{
+  "tool": "bq_analyze_query_performance",
+  "arguments": {
+    "sql": "SELECT id, name, total FROM large_table WHERE date >= '2024-01-01'"
+  }
+}
+```
+
+### 3. Analyze Complex Queries
+
+```json
+{
+  "tool": "bq_analyze_query_structure",
+  "arguments": {
+    "sql": "WITH daily_stats AS (SELECT DATE(timestamp) as day, COUNT(*) as cnt FROM events GROUP BY day) SELECT * FROM daily_stats WHERE cnt > 1000"
+  }
+}
+```
+
+Response:
+```json
+{
+  "query_type": "SELECT",
+  "has_cte": true,
+  "has_aggregations": true,
+  "complexity_score": 20,
+  "functions_used": ["DATE", "COUNT"]
+}
+```
+
 ## Common Pitfalls & Solutions
 
 ### 1. Parameter Type Issues

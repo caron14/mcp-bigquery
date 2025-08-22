@@ -2,7 +2,7 @@
 
 ## Tools
 
-MCP BigQuery provides two tools for SQL validation and analysis.
+MCP BigQuery provides eleven comprehensive tools for SQL validation, analysis, and schema discovery.
 
 ### bq_validate_sql
 
@@ -125,6 +125,354 @@ Performs a dry-run analysis to estimate costs and preview schema.
     "message": "Error description",
     "details": []
   }
+}
+```
+
+### bq_analyze_query_structure
+
+Analyzes SQL query structure and complexity.
+
+**Input Schema:**
+```json
+{
+  "type": "object",
+  "properties": {
+    "sql": {
+      "type": "string",
+      "description": "The SQL query to analyze"
+    },
+    "params": {
+      "type": "object",
+      "description": "Optional query parameters"
+    }
+  },
+  "required": ["sql"]
+}
+```
+
+**Response:**
+```json
+{
+  "query_type": "SELECT",
+  "has_joins": true,
+  "has_subqueries": false,
+  "has_cte": true,
+  "has_aggregations": true,
+  "has_window_functions": false,
+  "table_count": 2,
+  "complexity_score": 25,
+  "join_types": ["LEFT", "INNER"],
+  "functions_used": ["COUNT", "SUM"]
+}
+```
+
+### bq_extract_dependencies
+
+Extracts table and column dependencies from SQL.
+
+**Response:**
+```json
+{
+  "tables": [
+    {
+      "project": "my-project",
+      "dataset": "my_dataset",
+      "table": "my_table",
+      "full_name": "my-project.my_dataset.my_table"
+    }
+  ],
+  "columns": ["id", "name", "created_at"],
+  "dependency_graph": {
+    "my_dataset.my_table": ["id", "name", "created_at"]
+  },
+  "table_count": 1,
+  "column_count": 3
+}
+```
+
+### bq_validate_query_syntax
+
+Enhanced syntax validation with detailed error reporting.
+
+**Response:**
+```json
+{
+  "is_valid": true,
+  "issues": [
+    {
+      "type": "performance",
+      "message": "SELECT * may impact performance",
+      "severity": "warning"
+    }
+  ],
+  "suggestions": [
+    "Specify exact columns needed instead of using SELECT *"
+  ],
+  "bigquery_specific": {
+    "uses_legacy_sql": false,
+    "has_array_syntax": false,
+    "has_struct_syntax": true
+  }
+}
+```
+
+### bq_list_datasets
+
+Lists all datasets in the BigQuery project.
+
+**Input Schema:**
+```json
+{
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "GCP project ID (uses default if not provided)"
+    },
+    "max_results": {
+      "type": "integer",
+      "description": "Maximum number of datasets to return"
+    }
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "project": "my-project",
+  "dataset_count": 2,
+  "datasets": [
+    {
+      "dataset_id": "analytics",
+      "project": "my-project",
+      "location": "US",
+      "created": "2024-01-01T00:00:00",
+      "modified": "2024-06-01T00:00:00",
+      "description": "Analytics data",
+      "labels": {"env": "production"}
+    }
+  ]
+}
+```
+
+### bq_list_tables
+
+Lists all tables in a BigQuery dataset.
+
+**Input Schema:**
+```json
+{
+  "type": "object",
+  "properties": {
+    "dataset_id": {
+      "type": "string",
+      "description": "The dataset ID"
+    },
+    "project_id": {
+      "type": "string",
+      "description": "GCP project ID"
+    },
+    "max_results": {
+      "type": "integer"
+    },
+    "table_type_filter": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Filter by table types (TABLE, VIEW, EXTERNAL, MATERIALIZED_VIEW)"
+    }
+  },
+  "required": ["dataset_id"]
+}
+```
+
+**Response:**
+```json
+{
+  "dataset_id": "analytics",
+  "project": "my-project",
+  "table_count": 3,
+  "tables": [
+    {
+      "table_id": "users",
+      "table_type": "TABLE",
+      "num_bytes": 1048576,
+      "num_rows": 10000,
+      "partitioning": {
+        "type": "DAY",
+        "field": "created_at"
+      },
+      "clustering_fields": ["user_id"]
+    }
+  ]
+}
+```
+
+### bq_describe_table
+
+Gets detailed table schema and metadata.
+
+**Input Schema:**
+```json
+{
+  "type": "object",
+  "properties": {
+    "table_id": {"type": "string"},
+    "dataset_id": {"type": "string"},
+    "project_id": {"type": "string"},
+    "format_output": {
+      "type": "boolean",
+      "description": "Format schema as table"
+    }
+  },
+  "required": ["table_id", "dataset_id"]
+}
+```
+
+**Response:**
+```json
+{
+  "table_id": "users",
+  "dataset_id": "analytics",
+  "table_type": "TABLE",
+  "schema": [
+    {
+      "name": "user_id",
+      "type": "INTEGER",
+      "mode": "REQUIRED",
+      "description": "Unique identifier"
+    },
+    {
+      "name": "address",
+      "type": "RECORD",
+      "mode": "NULLABLE",
+      "fields": [
+        {
+          "name": "street",
+          "type": "STRING",
+          "mode": "NULLABLE"
+        }
+      ]
+    }
+  ],
+  "statistics": {
+    "num_bytes": 1048576,
+    "num_rows": 10000
+  }
+}
+```
+
+### bq_get_table_info
+
+Gets comprehensive table information.
+
+**Response:**
+```json
+{
+  "table_id": "users",
+  "dataset_id": "analytics",
+  "full_table_id": "my-project.analytics.users",
+  "table_type": "TABLE",
+  "created": "2024-01-15T00:00:00",
+  "statistics": {
+    "num_bytes": 1048576,
+    "num_rows": 10000,
+    "num_active_logical_bytes": 786432
+  },
+  "time_travel": {
+    "max_time_travel_hours": 168
+  },
+  "partitioning": {
+    "type": "DAY",
+    "time_partitioning": {
+      "field": "created_at",
+      "require_partition_filter": false
+    }
+  }
+}
+```
+
+### bq_query_info_schema
+
+Queries INFORMATION_SCHEMA views for metadata.
+
+**Input Schema:**
+```json
+{
+  "type": "object",
+  "properties": {
+    "query_type": {
+      "type": "string",
+      "enum": ["tables", "columns", "table_storage", "partitions", "views", "routines", "custom"]
+    },
+    "dataset_id": {"type": "string"},
+    "project_id": {"type": "string"},
+    "table_filter": {"type": "string"},
+    "custom_query": {"type": "string"},
+    "limit": {"type": "integer", "default": 100}
+  },
+  "required": ["query_type", "dataset_id"]
+}
+```
+
+**Response:**
+```json
+{
+  "query_type": "columns",
+  "dataset_id": "analytics",
+  "query": "SELECT ... FROM INFORMATION_SCHEMA.COLUMNS ...",
+  "schema": [
+    {
+      "name": "column_name",
+      "type": "STRING",
+      "mode": "NULLABLE"
+    }
+  ],
+  "metadata": {
+    "total_bytes_processed": 1024,
+    "estimated_cost_usd": 0.000005
+  }
+}
+```
+
+### bq_analyze_query_performance
+
+Analyzes query performance and provides optimization suggestions.
+
+**Input Schema:**
+```json
+{
+  "type": "object",
+  "properties": {
+    "sql": {
+      "type": "string",
+      "description": "The SQL query to analyze"
+    },
+    "project_id": {"type": "string"}
+  },
+  "required": ["sql"]
+}
+```
+
+**Response:**
+```json
+{
+  "query_analysis": {
+    "bytes_processed": 107374182400,
+    "gigabytes_processed": 100.0,
+    "estimated_cost_usd": 0.5,
+    "table_count": 1
+  },
+  "performance_score": 65,
+  "performance_rating": "GOOD",
+  "optimization_suggestions": [
+    {
+      "type": "SELECT_STAR",
+      "severity": "MEDIUM",
+      "message": "Query uses SELECT *",
+      "recommendation": "Select only needed columns"
+    }
+  ]
 }
 ```
 

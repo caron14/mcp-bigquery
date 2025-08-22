@@ -71,12 +71,16 @@ mcp-bigquery/
 │   ├── __init__.py         # Package initialization
 │   ├── __main__.py         # Entry point
 │   ├── server.py           # MCP server implementation
-│   └── bigquery_client.py  # BigQuery client utilities
+│   ├── bigquery_client.py  # BigQuery client utilities
+│   ├── sql_analyzer.py     # SQL analysis engine (v0.3.0)
+│   ├── schema_explorer.py  # Schema discovery tools (v0.4.0)
+│   └── info_schema.py      # INFORMATION_SCHEMA tools (v0.4.0)
 ├── tests/
-│   ├── test_min.py         # Unit tests (no credentials)
+│   ├── test_features.py    # Comprehensive feature tests
+│   ├── test_min.py         # Credential-required tests
 │   ├── test_imports.py     # Import validation
 │   └── test_integration.py # Integration tests
-├── docs/                   # Documentation
+├── docs/                   # MkDocs documentation
 ├── examples/               # Usage examples
 └── pyproject.toml         # Project configuration
 ```
@@ -279,17 +283,36 @@ logging.basicConfig(level=logging.DEBUG)
 
 The server follows MCP protocol standards:
 
-1. **Tool Registration** - Tools are registered in `handle_list_tools()`
+1. **Tool Registration** - Eleven tools registered in `handle_list_tools()`
 2. **Tool Execution** - Requests handled in `handle_call_tool()`
 3. **Error Handling** - Consistent error format across all tools
 4. **Async Support** - All operations are async for performance
 
-### BigQuery Client
+### Core Modules
 
+#### BigQuery Client (`bigquery_client.py`)
 - Uses Application Default Credentials (ADC)
 - Respects environment variables (BQ_PROJECT, BQ_LOCATION)
 - All queries run with `dry_run=True`
 - Cache disabled for accurate cost estimates
+
+#### SQL Analyzer (`sql_analyzer.py`) - v0.3.0
+- SQLAnalyzer class for static SQL analysis
+- Uses sqlparse for AST parsing
+- Complexity scoring algorithm
+- BigQuery-specific syntax support
+
+#### Schema Explorer (`schema_explorer.py`) - v0.4.0
+- Dataset and table discovery
+- Schema inspection with nested field support
+- Partitioning and clustering metadata
+- Support for all BigQuery table types
+
+#### Info Schema (`info_schema.py`) - v0.4.0
+- INFORMATION_SCHEMA query templates
+- Performance analysis and scoring
+- Optimization suggestion engine
+- Safe dry-run execution for metadata queries
 
 ### Error Handling
 
