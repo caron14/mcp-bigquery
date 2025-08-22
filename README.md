@@ -812,7 +812,7 @@ MIT
 
 ## Changelog
 
-### 0.4.0-dev (In Development)
+### 0.4.0 (2025-08-22)
 - **MAJOR FEATURE**: Added comprehensive schema discovery and metadata exploration
 - **NEW TOOLS**: Six new tools for BigQuery schema and metadata operations
 - **bq_list_datasets**: List all datasets in the project with metadata

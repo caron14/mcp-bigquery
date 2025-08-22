@@ -1,6 +1,6 @@
 """MCP BigQuery Server - MCP server for BigQuery SQL validation and dry-run."""
 
-__version__ = "0.4.0-dev"
+__version__ = "0.4.0"
 __author__ = "caron14"
 __email__ = "caron14@users.noreply.github.com"
 
