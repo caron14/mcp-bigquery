@@ -105,8 +105,11 @@ class SQLAnalyzer:
         # Generate suggestions based on issues
         suggestions = self._generate_suggestions(issues)
 
+        # Only consider errors for validity, not warnings or info
+        has_errors = any(issue.get("severity") == "error" for issue in issues)
+
         return {
-            "is_valid": len(issues) == 0,
+            "is_valid": not has_errors,
             "issues": issues,
             "suggestions": suggestions,
             "bigquery_specific": {
@@ -235,23 +238,45 @@ class SQLAnalyzer:
         tables = []
 
         # BigQuery table reference patterns
-        # Format: [project.]dataset.table or `project.dataset.table`
+        # Format: [project.]dataset.table or `project.dataset.table` or just table_name
         patterns = [
-            r"FROM\s+`([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)`",  # `project.dataset.table`
-            r"FROM\s+`([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)`",  # `dataset.table`
-            r"FROM\s+([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)(?:\s|$)",  # project.dataset.table
-            r"FROM\s+([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)(?:\s|$)",  # dataset.table
-            r"JOIN\s+`([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)`",  # `project.dataset.table` in JOIN
-            r"JOIN\s+`([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)`",  # `dataset.table` in JOIN
-            r"JOIN\s+([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)(?:\s|$)",  # project.dataset.table in JOIN
-            r"JOIN\s+([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)(?:\s|$)",  # dataset.table in JOIN
+            # Fully qualified patterns
+            (
+                r"FROM\s+`([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)`",
+                3,
+            ),  # `project.dataset.table`
+            (r"FROM\s+`([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)`", 2),  # `dataset.table`
+            (
+                r"FROM\s+([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)(?:\s|$)",
+                3,
+            ),  # project.dataset.table
+            (r"FROM\s+([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)(?:\s|$)", 2),  # dataset.table
+            (
+                r"JOIN\s+`([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)`",
+                3,
+            ),  # `project.dataset.table` in JOIN
+            (r"JOIN\s+`([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)`", 2),  # `dataset.table` in JOIN
+            (
+                r"JOIN\s+([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)(?:\s|$)",
+                3,
+            ),  # project.dataset.table in JOIN
+            (r"JOIN\s+([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_-]+)(?:\s|$)", 2),  # dataset.table in JOIN
+            # Simple table name patterns (for test compatibility)
+            (
+                r"FROM\s+([a-zA-Z0-9_]+)(?:\s+[a-zA-Z0-9_]+)?(?:\s|$|,)",
+                1,
+            ),  # Simple table name with optional alias
+            (
+                r"JOIN\s+([a-zA-Z0-9_]+)(?:\s+[a-zA-Z0-9_]+)?(?:\s+ON|\s|$)",
+                1,
+            ),  # Simple table name in JOIN
         ]
 
-        for pattern in patterns:
+        for pattern, group_count in patterns:
             matches = re.finditer(pattern, self.sql, re.IGNORECASE)
             for match in matches:
                 groups = match.groups()
-                if len(groups) == 3:
+                if group_count == 3:
                     # project.dataset.table format
                     tables.append(
                         {
@@ -259,9 +284,10 @@ class SQLAnalyzer:
                             "dataset": groups[1],
                             "table": groups[2],
                             "full_name": f"{groups[0]}.{groups[1]}.{groups[2]}",
+                            "name": f"{groups[0]}.{groups[1]}.{groups[2]}",
                         }
                     )
-                elif len(groups) == 2:
+                elif group_count == 2:
                     # dataset.table format
                     tables.append(
                         {
@@ -269,8 +295,37 @@ class SQLAnalyzer:
                             "dataset": groups[0],
                             "table": groups[1],
                             "full_name": f"{groups[0]}.{groups[1]}",
+                            "name": f"{groups[0]}.{groups[1]}",
                         }
                     )
+                elif group_count == 1:
+                    # Simple table name
+                    table_name = groups[0]
+                    # Skip if it's an alias or keyword
+                    if table_name.upper() not in [
+                        "AS",
+                        "ON",
+                        "WHERE",
+                        "AND",
+                        "OR",
+                        "LEFT",
+                        "RIGHT",
+                        "INNER",
+                        "FULL",
+                        "CROSS",
+                    ]:
+                        # Check if this table was already added with full qualification
+                        is_duplicate = any(t.get("table") == table_name for t in tables)
+                        if not is_duplicate:
+                            tables.append(
+                                {
+                                    "project": None,
+                                    "dataset": None,
+                                    "table": table_name,
+                                    "full_name": table_name,
+                                    "name": table_name,
+                                }
+                            )
 
         # Remove duplicates
         seen = set()

@@ -1,6 +1,6 @@
 # Usage Guide
 
-This guide covers how to use MCP BigQuery for SQL validation and dry-run analysis.
+This guide covers how to use MCP BigQuery's eleven tools for SQL validation, analysis, schema discovery, and performance optimization.
 
 ## SQL Validation
 
@@ -352,6 +352,214 @@ Add SQL validation to your pipeline:
     for file in queries/*.sql; do
       mcp-bigquery validate "$file"
     done
+```
+
+## SQL Analysis
+
+### Query Structure Analysis
+
+The `bq_analyze_query_structure` tool analyzes SQL complexity and patterns:
+
+```json
+{
+  "tool": "bq_analyze_query_structure",
+  "arguments": {
+    "sql": "WITH user_orders AS (SELECT user_id, COUNT(*) as cnt FROM orders GROUP BY user_id) SELECT * FROM user_orders WHERE cnt > 10"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "query_type": "SELECT",
+  "has_cte": true,
+  "has_aggregations": true,
+  "complexity_score": 15,
+  "table_count": 1
+}
+```
+
+### Dependency Extraction
+
+Extract table and column dependencies with `bq_extract_dependencies`:
+
+```json
+{
+  "tool": "bq_extract_dependencies",
+  "arguments": {
+    "sql": "SELECT u.name, o.total FROM users u JOIN orders o ON u.id = o.user_id"
+  }
+}
+```
+
+### Enhanced Syntax Validation
+
+Get detailed validation with suggestions using `bq_validate_query_syntax`:
+
+```json
+{
+  "tool": "bq_validate_query_syntax",
+  "arguments": {
+    "sql": "SELECT * FROM users LIMIT 10"
+  }
+}
+```
+
+## Schema Discovery
+
+### List Datasets
+
+Discover available datasets with `bq_list_datasets`:
+
+```json
+{
+  "tool": "bq_list_datasets",
+  "arguments": {
+    "project_id": "my-project",
+    "max_results": 10
+  }
+}
+```
+
+### Browse Tables
+
+Explore tables in a dataset with `bq_list_tables`:
+
+```json
+{
+  "tool": "bq_list_tables",
+  "arguments": {
+    "dataset_id": "analytics",
+    "table_type_filter": ["TABLE", "VIEW"]
+  }
+}
+```
+
+### Describe Table Schema
+
+Get detailed schema information with `bq_describe_table`:
+
+```json
+{
+  "tool": "bq_describe_table",
+  "arguments": {
+    "table_id": "users",
+    "dataset_id": "analytics",
+    "format_output": true
+  }
+}
+```
+
+### Comprehensive Table Info
+
+Access all table metadata with `bq_get_table_info`:
+
+```json
+{
+  "tool": "bq_get_table_info",
+  "arguments": {
+    "table_id": "users",
+    "dataset_id": "analytics"
+  }
+}
+```
+
+## INFORMATION_SCHEMA Queries
+
+### Query Metadata Views
+
+Use `bq_query_info_schema` to safely query INFORMATION_SCHEMA:
+
+```json
+{
+  "tool": "bq_query_info_schema",
+  "arguments": {
+    "query_type": "columns",
+    "dataset_id": "analytics",
+    "table_filter": "users"
+  }
+}
+```
+
+Available query types:
+- `tables` - Table metadata
+- `columns` - Column information
+- `table_storage` - Storage statistics
+- `partitions` - Partition details
+- `views` - View definitions
+- `routines` - Stored procedures
+- `custom` - Custom INFORMATION_SCHEMA queries
+
+## Performance Analysis
+
+### Analyze Query Performance
+
+Get performance insights with `bq_analyze_query_performance`:
+
+```json
+{
+  "tool": "bq_analyze_query_performance",
+  "arguments": {
+    "sql": "SELECT * FROM large_table WHERE date > '2024-01-01'"
+  }
+}
+```
+
+**Response includes:**
+- Performance score (0-100)
+- Performance rating (EXCELLENT, GOOD, FAIR, NEEDS_OPTIMIZATION)
+- Optimization suggestions with severity levels
+- Cost estimates and data scan volume
+
+### Optimization Recommendations
+
+Common optimization suggestions:
+1. **SELECT_STAR** - Replace with specific columns
+2. **HIGH_DATA_SCAN** - Add WHERE clauses or use partitions
+3. **LIMIT_WITHOUT_ORDER** - Add ORDER BY for consistency
+4. **CROSS_JOIN** - Verify necessity, use INNER JOIN if possible
+5. **SUBQUERY_IN_WHERE** - Consider JOIN or WITH clause
+6. **MANY_TABLES** - Create intermediate tables or views
+
+## Advanced Features
+
+### Working with Nested Fields
+
+Handle RECORD and ARRAY types:
+
+```sql
+SELECT 
+  user.name,
+  user.address.city,
+  ARRAY_LENGTH(user.tags) as tag_count
+FROM users_with_nested_data
+```
+
+### Partitioning and Clustering
+
+Identify partitioned tables:
+
+```json
+{
+  "tool": "bq_describe_table",
+  "arguments": {
+    "table_id": "events",
+    "dataset_id": "analytics"
+  }
+}
+```
+
+Response includes partitioning details:
+```json
+{
+  "partitioning": {
+    "type": "DAY",
+    "field": "event_date",
+    "require_partition_filter": true
+  },
+  "clustering_fields": ["user_id", "event_type"]
+}
 ```
 
 ## Performance Tips

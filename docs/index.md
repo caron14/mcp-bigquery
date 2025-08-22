@@ -15,28 +15,40 @@
 
 ## Overview
 
-The `mcp-bigquery` package provides a Model Context Protocol (MCP) server that enables safe BigQuery SQL validation and analysis without executing queries. Perfect for development workflows, CI/CD pipelines, and cost optimization.
+The `mcp-bigquery` package provides a comprehensive MCP server for BigQuery SQL validation, dry-run analysis, query structure analysis, and schema discovery. This server provides eleven tools for validating, analyzing, understanding BigQuery SQL queries, and exploring BigQuery schemas without executing queries.
 
 !!! warning "Important"
     This server does **NOT** execute queries. All operations are dry-run only. Cost estimates are approximations based on bytes processed.
 
 ## Key Features
 
-### ✅ SQL Validation
-Validate BigQuery SQL syntax without running queries. Catch errors early in your development workflow.
-[→ Validation Guide](usage.md#sql-validation)
+### 🔍 SQL Analysis & Validation
+- **SQL Validation**: Check BigQuery SQL syntax without running queries
+- **Dry-Run Analysis**: Get cost estimates, referenced tables, and schema preview
+- **Query Structure Analysis**: Analyze SQL complexity, JOINs, CTEs, and query patterns
+- **Dependency Extraction**: Extract table and column dependencies from queries
+- **Enhanced Syntax Validation**: Detailed error reporting with suggestions
+[→ SQL Analysis Guide](usage.md#sql-analysis)
 
-### 💰 Cost Estimation
-Get accurate cost estimates based on bytes processed. Optimize queries before execution.
-[→ Cost Estimation](usage.md#dry-run-analysis)
+### 📊 Schema Discovery & Metadata (v0.4.0)
+- **Dataset Explorer**: List and explore datasets in your BigQuery project
+- **Table Browser**: Browse tables with metadata, partitioning, and clustering info
+- **Schema Inspector**: Get detailed table schemas with nested field support
+- **INFORMATION_SCHEMA Access**: Safe querying of BigQuery metadata views
+- **Comprehensive Table Info**: Access all table metadata including encryption and time travel
+[→ Schema Discovery Guide](usage.md#schema-discovery)
 
-### 📊 Schema Preview
-Preview result schemas and referenced tables without accessing actual data.
-[→ Dry-Run Analysis](usage.md#dry-run-analysis)
+### 🚀 Performance Analysis
+- **Query Performance Scoring**: Analyze query performance without execution
+- **Optimization Suggestions**: Get actionable recommendations for query improvements
+- **Cost-Benefit Analysis**: Compare costs before and after optimizations
+[→ Performance Guide](usage.md#performance-analysis)
 
-### 🏷️ Parameter Support
-Validate parameterized queries with full support for query parameters.
-[→ Using Parameters](usage.md#using-parameters)
+### 🏷️ Additional Features
+- **Parameter Support**: Validate parameterized queries
+- **Safe Operations**: All operations are dry-run only, no query execution
+- **BigQuery-Specific**: Support for ARRAY, STRUCT, and other BigQuery features
+[→ Advanced Features](usage.md#advanced-features)
 
 ## Quick Example
 
@@ -80,6 +92,60 @@ Validate parameterized queries with full support for query parameters.
           "project": "bigquery-public-data",
           "dataset": "samples",
           "table": "shakespeare"
+        }
+      ]
+    }
+    ```
+
+=== "Schema Discovery"
+
+    ```json
+    {
+      "tool": "bq_list_tables",
+      "arguments": {
+        "dataset_id": "samples",
+        "project_id": "bigquery-public-data"
+      }
+    }
+    ```
+
+    **Response:**
+    ```json
+    {
+      "dataset_id": "samples",
+      "table_count": 3,
+      "tables": [
+        {
+          "table_id": "shakespeare",
+          "table_type": "TABLE",
+          "num_rows": 164656,
+          "num_bytes": 6432064
+        }
+      ]
+    }
+    ```
+
+=== "Performance Analysis"
+
+    ```json
+    {
+      "tool": "bq_analyze_query_performance",
+      "arguments": {
+        "sql": "SELECT * FROM large_table WHERE date > '2024-01-01'"
+      }
+    }
+    ```
+
+    **Response:**
+    ```json
+    {
+      "performance_score": 65,
+      "performance_rating": "GOOD",
+      "optimization_suggestions": [
+        {
+          "type": "SELECT_STAR",
+          "severity": "MEDIUM",
+          "recommendation": "Select only needed columns"
         }
       ]
     }
