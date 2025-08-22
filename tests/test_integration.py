@@ -73,7 +73,7 @@ class TestRealBigQueryIntegration:
 
         # Since we only support STRING parameters, we need to cast numeric comparisons
         sql = """
-        SELECTword, word_count
+        SELECT word, word_count
         FROM `bigquery-public-data.samples.shakespeare`
         WHERE corpus = @corpus_name
         AND word_count > CAST(@min_count AS INT64)
