@@ -24,6 +24,15 @@ async def list_datasets(
         Dict with list of datasets and their metadata
     """
     try:
+        # Input validation
+        if max_results is not None and max_results <= 0:
+            return {
+                "error": {
+                    "code": "INVALID_PARAMETER",
+                    "message": "max_results must be a positive integer",
+                }
+            }
+
         client = get_bigquery_client()
 
         # Use provided project_id or client's default
@@ -73,6 +82,34 @@ async def list_tables(
         Dict with list of tables and their metadata
     """
     try:
+        # Input validation
+        if not dataset_id or not dataset_id.strip():
+            return {
+                "error": {
+                    "code": "INVALID_PARAMETER",
+                    "message": "dataset_id is required and cannot be empty",
+                }
+            }
+
+        if max_results is not None and max_results <= 0:
+            return {
+                "error": {
+                    "code": "INVALID_PARAMETER",
+                    "message": "max_results must be a positive integer",
+                }
+            }
+
+        valid_table_types = {"TABLE", "VIEW", "EXTERNAL", "MATERIALIZED_VIEW"}
+        if table_type_filter:
+            invalid_types = set(table_type_filter) - valid_table_types
+            if invalid_types:
+                return {
+                    "error": {
+                        "code": "INVALID_PARAMETER",
+                        "message": f"Invalid table types: {', '.join(invalid_types)}. Valid types are: {', '.join(sorted(valid_table_types))}",
+                    }
+                }
+
         client = get_bigquery_client()
         project = project_id or client.project
 
@@ -157,6 +194,23 @@ async def describe_table(
         Dict with table schema, metadata, and statistics
     """
     try:
+        # Input validation
+        if not table_id or not table_id.strip():
+            return {
+                "error": {
+                    "code": "INVALID_PARAMETER",
+                    "message": "table_id is required and cannot be empty",
+                }
+            }
+
+        if not dataset_id or not dataset_id.strip():
+            return {
+                "error": {
+                    "code": "INVALID_PARAMETER",
+                    "message": "dataset_id is required and cannot be empty",
+                }
+            }
+
         client = get_bigquery_client()
         project = project_id or client.project
 
@@ -272,6 +326,23 @@ async def get_table_info(
         Dict with comprehensive table information
     """
     try:
+        # Input validation
+        if not table_id or not table_id.strip():
+            return {
+                "error": {
+                    "code": "INVALID_PARAMETER",
+                    "message": "table_id is required and cannot be empty",
+                }
+            }
+
+        if not dataset_id or not dataset_id.strip():
+            return {
+                "error": {
+                    "code": "INVALID_PARAMETER",
+                    "message": "dataset_id is required and cannot be empty",
+                }
+            }
+
         client = get_bigquery_client()
         project = project_id or client.project
 
