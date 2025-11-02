@@ -67,6 +67,8 @@ NOTES.md
 local/
 scratch/
 tmp/
+.claude/*
+.serena/*
 CLAUDE.md
 
 # Backup files
