@@ -67,6 +67,7 @@ NOTES.md
 local/
 scratch/
 tmp/
+.cache/*
 .claude/*
 .serena/*
 CLAUDE.md
