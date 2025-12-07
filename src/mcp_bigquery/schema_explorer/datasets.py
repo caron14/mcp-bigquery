@@ -42,7 +42,11 @@ async def _list_datasets_impl(request: ListDatasetsRequest) -> dict[str, Any]:
     project = request.project_id or client.project
 
     datasets = []
-    iterator = client.list_datasets(project=project, max_results=request.max_results)
+    list_kwargs: dict[str, Any] = {"project": project}
+    if request.max_results is not None:
+        list_kwargs["max_results"] = request.max_results
+
+    iterator = client.list_datasets(**list_kwargs)
 
     for dataset in iterator:
         ref = client.get_dataset(dataset.reference)

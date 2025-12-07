@@ -32,6 +32,8 @@ except ImportError:
 
 from .constants import DEFAULT_LIMITS, TableType
 
+PROJECT_ID_PATTERN = r"^(?:[a-z][a-z0-9-]{4,28}[a-z0-9]|[a-z0-9.-]+:[a-z][a-z0-9-]{4,28}[a-z0-9])$"
+
 
 class SQLValidationRequest(BaseModel):
     """Request model for SQL validation."""
@@ -97,16 +99,16 @@ class QueryAnalysisRequest(BaseModel):
 class ListDatasetsRequest(BaseModel):
     """Request model for listing datasets."""
 
-    project_id: Optional[str] = Field(None, pattern=r"^[a-z][a-z0-9-]{4,28}[a-z0-9]$")
-    max_results: Optional[int] = Field(DEFAULT_LIMITS["max_results"], ge=1, le=10000)
+    project_id: Optional[str] = Field(None, pattern=PROJECT_ID_PATTERN)
+    max_results: Optional[int] = Field(None, ge=1, le=10000)
 
 
 class ListTablesRequest(BaseModel):
     """Request model for listing tables."""
 
     dataset_id: str = Field(..., min_length=1, max_length=1024)
-    project_id: Optional[str] = Field(None, pattern=r"^[a-z][a-z0-9-]{4,28}[a-z0-9]$")
-    max_results: Optional[int] = Field(DEFAULT_LIMITS["max_results"], ge=1, le=10000)
+    project_id: Optional[str] = Field(None, pattern=PROJECT_ID_PATTERN)
+    max_results: Optional[int] = Field(None, ge=1, le=10000)
     table_type_filter: Optional[List[str]] = Field(None)
 
     @field_validator("table_type_filter")
@@ -129,7 +131,7 @@ class DescribeTableRequest(BaseModel):
 
     table_id: str = Field(..., min_length=1, max_length=1024)
     dataset_id: str = Field(..., min_length=1, max_length=1024)
-    project_id: Optional[str] = Field(None, pattern=r"^[a-z][a-z0-9-]{4,28}[a-z0-9]$")
+    project_id: Optional[str] = Field(None, pattern=PROJECT_ID_PATTERN)
     format_output: bool = Field(False)
 
 
@@ -138,7 +140,7 @@ class GetTableInfoRequest(BaseModel):
 
     table_id: str = Field(..., min_length=1, max_length=1024)
     dataset_id: str = Field(..., min_length=1, max_length=1024)
-    project_id: Optional[str] = Field(None, pattern=r"^[a-z][a-z0-9-]{4,28}[a-z0-9]$")
+    project_id: Optional[str] = Field(None, pattern=PROJECT_ID_PATTERN)
 
 
 class QueryInfoSchemaRequest(BaseModel):
@@ -148,7 +150,7 @@ class QueryInfoSchemaRequest(BaseModel):
         ..., pattern=r"^(tables|columns|table_storage|partitions|views|routines|custom)$"
     )
     dataset_id: str = Field(..., min_length=1, max_length=1024)
-    project_id: Optional[str] = Field(None, pattern=r"^[a-z][a-z0-9-]{4,28}[a-z0-9]$")
+    project_id: Optional[str] = Field(None, pattern=PROJECT_ID_PATTERN)
     table_filter: Optional[str] = Field(None, max_length=1024)
     custom_query: Optional[str] = Field(None, max_length=DEFAULT_LIMITS["max_query_length"])
     limit: int = Field(DEFAULT_LIMITS["info_schema_limit"], ge=1, le=10000)
@@ -169,7 +171,7 @@ class AnalyzePerformanceRequest(BaseModel):
     """Request model for analyzing query performance."""
 
     sql: str = Field(..., min_length=1, max_length=DEFAULT_LIMITS["max_query_length"])
-    project_id: Optional[str] = Field(None, pattern=r"^[a-z][a-z0-9-]{4,28}[a-z0-9]$")
+    project_id: Optional[str] = Field(None, pattern=PROJECT_ID_PATTERN)
 
     @field_validator("sql")
     @classmethod

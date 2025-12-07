@@ -60,10 +60,11 @@ async def _list_tables_impl(request: ListTablesRequest) -> dict[str, Any]:
     project = request.project_id or client.project
 
     try:
-        iterator = client.list_tables(
-            f"{project}.{request.dataset_id}",
-            max_results=request.max_results,
-        )
+        list_kwargs: dict[str, Any] = {"dataset": f"{project}.{request.dataset_id}"}
+        if request.max_results is not None:
+            list_kwargs["max_results"] = request.max_results
+
+        iterator = client.list_tables(**list_kwargs)
     except NotFound as exc:
         raise DatasetNotFoundError(request.dataset_id, project) from exc
 
