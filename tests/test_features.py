@@ -157,7 +157,7 @@ class TestSchemaExplorer:
     @pytest.mark.asyncio
     async def test_list_datasets_success(self):
         """Test successful dataset listing."""
-        with patch("mcp_bigquery.schema_explorer.get_bigquery_client") as mock_get_client:
+        with patch("mcp_bigquery.schema_explorer.datasets.get_bigquery_client") as mock_get_client:
             # Mock BigQuery client
             mock_client = MagicMock()
             mock_get_client.return_value = mock_client
@@ -193,7 +193,7 @@ class TestSchemaExplorer:
     @pytest.mark.asyncio
     async def test_list_datasets_error(self):
         """Test dataset listing with error."""
-        with patch("mcp_bigquery.schema_explorer.get_bigquery_client") as mock_get_client:
+        with patch("mcp_bigquery.schema_explorer.datasets.get_bigquery_client") as mock_get_client:
             mock_client = MagicMock()
             mock_get_client.return_value = mock_client
             mock_client.list_datasets.side_effect = Exception("API Error")
@@ -207,7 +207,7 @@ class TestSchemaExplorer:
     @pytest.mark.asyncio
     async def test_list_tables_success(self):
         """Test successful table listing."""
-        with patch("mcp_bigquery.schema_explorer.get_bigquery_client") as mock_get_client:
+        with patch("mcp_bigquery.schema_explorer.tables.get_bigquery_client") as mock_get_client:
             mock_client = MagicMock()
             mock_get_client.return_value = mock_client
             mock_client.project = "test-project"
@@ -247,7 +247,7 @@ class TestSchemaExplorer:
     @pytest.mark.asyncio
     async def test_list_tables_with_filter(self):
         """Test table listing with type filter."""
-        with patch("mcp_bigquery.schema_explorer.get_bigquery_client") as mock_get_client:
+        with patch("mcp_bigquery.schema_explorer.tables.get_bigquery_client") as mock_get_client:
             mock_client = MagicMock()
             mock_get_client.return_value = mock_client
             mock_client.project = "test-project"
@@ -291,7 +291,7 @@ class TestSchemaExplorer:
     @pytest.mark.asyncio
     async def test_list_tables_dataset_not_found(self):
         """Test table listing when dataset not found."""
-        with patch("mcp_bigquery.schema_explorer.get_bigquery_client") as mock_get_client:
+        with patch("mcp_bigquery.schema_explorer.tables.get_bigquery_client") as mock_get_client:
             mock_client = MagicMock()
             mock_get_client.return_value = mock_client
             mock_client.project = "test-project"
@@ -305,7 +305,7 @@ class TestSchemaExplorer:
     @pytest.mark.asyncio
     async def test_describe_table_success(self):
         """Test successful table description."""
-        with patch("mcp_bigquery.schema_explorer.get_bigquery_client") as mock_get_client:
+        with patch("mcp_bigquery.schema_explorer.describe.get_bigquery_client") as mock_get_client:
             mock_client = MagicMock()
             mock_get_client.return_value = mock_client
             mock_client.project = "test-project"
@@ -364,7 +364,7 @@ class TestSchemaExplorer:
     @pytest.mark.asyncio
     async def test_describe_table_with_nested_fields(self):
         """Test table description with nested fields."""
-        with patch("mcp_bigquery.schema_explorer.get_bigquery_client") as mock_get_client:
+        with patch("mcp_bigquery.schema_explorer.describe.get_bigquery_client") as mock_get_client:
             mock_client = MagicMock()
             mock_get_client.return_value = mock_client
             mock_client.project = "test-project"
@@ -413,7 +413,7 @@ class TestSchemaExplorer:
     @pytest.mark.asyncio
     async def test_get_table_info_comprehensive(self):
         """Test comprehensive table info retrieval."""
-        with patch("mcp_bigquery.schema_explorer.get_bigquery_client") as mock_get_client:
+        with patch("mcp_bigquery.schema_explorer.tables.get_bigquery_client") as mock_get_client:
             mock_client = MagicMock()
             mock_get_client.return_value = mock_client
             mock_client.project = "test-project"
@@ -468,7 +468,7 @@ class TestInfoSchema:
     @pytest.mark.asyncio
     async def test_query_info_schema_tables(self):
         """Test querying INFORMATION_SCHEMA.TABLES."""
-        with patch("mcp_bigquery.info_schema.get_bigquery_client") as mock_get_client:
+        with patch("mcp_bigquery.info_schema.queries.get_bigquery_client") as mock_get_client:
             mock_client = MagicMock()
             mock_get_client.return_value = mock_client
             mock_client.project = "test-project"
@@ -501,7 +501,7 @@ class TestInfoSchema:
     @pytest.mark.asyncio
     async def test_query_info_schema_custom(self):
         """Test custom INFORMATION_SCHEMA query."""
-        with patch("mcp_bigquery.info_schema.get_bigquery_client") as mock_get_client:
+        with patch("mcp_bigquery.info_schema.queries.get_bigquery_client") as mock_get_client:
             mock_client = MagicMock()
             mock_get_client.return_value = mock_client
             mock_client.project = "test-project"
@@ -522,7 +522,7 @@ class TestInfoSchema:
     @pytest.mark.asyncio
     async def test_query_info_schema_invalid_type(self):
         """Test INFORMATION_SCHEMA query with invalid type."""
-        with patch("mcp_bigquery.info_schema.get_bigquery_client") as mock_get_client:
+        with patch("mcp_bigquery.info_schema.queries.get_bigquery_client") as mock_get_client:
             mock_client = MagicMock()
             mock_get_client.return_value = mock_client
 
@@ -535,7 +535,7 @@ class TestInfoSchema:
     @pytest.mark.asyncio
     async def test_analyze_query_performance_simple(self):
         """Test query performance analysis for simple query."""
-        with patch("mcp_bigquery.info_schema.get_bigquery_client") as mock_get_client:
+        with patch("mcp_bigquery.info_schema.performance.get_bigquery_client") as mock_get_client:
             mock_client = MagicMock()
             mock_get_client.return_value = mock_client
             mock_client.project = "test-project"
@@ -565,7 +565,7 @@ class TestInfoSchema:
     @pytest.mark.asyncio
     async def test_analyze_query_performance_complex(self):
         """Test query performance analysis for complex query."""
-        with patch("mcp_bigquery.info_schema.get_bigquery_client") as mock_get_client:
+        with patch("mcp_bigquery.info_schema.performance.get_bigquery_client") as mock_get_client:
             mock_client = MagicMock()
             mock_get_client.return_value = mock_client
             mock_client.project = "test-project"
@@ -616,7 +616,7 @@ class TestInfoSchema:
     @pytest.mark.asyncio
     async def test_analyze_query_performance_excellent(self):
         """Test query performance analysis for optimized query."""
-        with patch("mcp_bigquery.info_schema.get_bigquery_client") as mock_get_client:
+        with patch("mcp_bigquery.info_schema.performance.get_bigquery_client") as mock_get_client:
             mock_client = MagicMock()
             mock_get_client.return_value = mock_client
             mock_client.project = "test-project"

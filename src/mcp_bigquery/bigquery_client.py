@@ -1,40 +1,42 @@
-"""BigQuery client helper for MCP server."""
+"""Compatibility wrappers for the shared BigQuery client factory."""
 
-import os
+from __future__ import annotations
 
-from google.auth.exceptions import DefaultCredentialsError
+from typing import Optional
+
 from google.cloud import bigquery
 
+from .clients import get_bigquery_client as _get_bigquery_client
+from .clients import get_bigquery_client_with_retry as _get_bigquery_client_with_retry
 
-def get_bigquery_client() -> bigquery.Client:
+__all__ = ["get_bigquery_client", "get_bigquery_client_with_retry"]
+
+
+def get_bigquery_client(
+    project_id: Optional[str] = None,
+    location: Optional[str] = None,
+    use_cache: bool = True,
+) -> bigquery.Client:
     """
-    Create and return a configured BigQuery client.
+    Retrieve a configured BigQuery client.
 
-    Uses Application Default Credentials (ADC) by default.
-    Respects environment variables:
-    - BQ_PROJECT: GCP project ID
-    - BQ_LOCATION: Default location for BigQuery operations
-
-    Returns:
-        bigquery.Client: Configured BigQuery client
-
-    Raises:
-        DefaultCredentialsError: If credentials cannot be found
+    Args mirror the shared client factory so callers can opt into cache reuse or
+    override the target project/location explicitly.
     """
-    project = os.environ.get("BQ_PROJECT")
-    location = os.environ.get("BQ_LOCATION")
+    return _get_bigquery_client(project_id=project_id, location=location, use_cache=use_cache)
 
-    try:
-        # Create client with location if provided
-        if location:
-            client = bigquery.Client(project=project, location=location)
-        else:
-            client = bigquery.Client(project=project)
-        return client
-    except DefaultCredentialsError as e:
-        raise DefaultCredentialsError(
-            "No BigQuery credentials found. Please set up Application "
-            "Default Credentials or provide a service account key. "
-            "Run 'gcloud auth application-default login' for local "
-            "development."
-        ) from e
+
+def get_bigquery_client_with_retry(
+    project_id: Optional[str] = None,
+    location: Optional[str] = None,
+    *,
+    max_retries: int = 3,
+    retry_delay: float = 1.0,
+) -> bigquery.Client:
+    """Expose the retry-enabled client helper for legacy imports."""
+    return _get_bigquery_client_with_retry(
+        project_id=project_id,
+        location=location,
+        max_retries=max_retries,
+        retry_delay=retry_delay,
+    )

@@ -4,7 +4,7 @@ import json
 import logging
 import sys
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Optional, TextIO
 
 
 class JSONFormatter(logging.Formatter):
@@ -102,11 +102,37 @@ class ContextLogger:
         self.error(msg, *args, **kwargs)
 
 
+def resolve_log_level(
+    *,
+    default_level: str = "WARNING",
+    explicit_level: Optional[str] = None,
+    verbose: int = 0,
+    quiet: int = 0,
+) -> str:
+    """Determine the effective log level from CLI flags."""
+
+    if explicit_level:
+        return explicit_level.upper()
+
+    if verbose >= 2:
+        return "DEBUG"
+    if verbose == 1:
+        return "INFO"
+
+    if quiet >= 2:
+        return "CRITICAL"
+    if quiet == 1:
+        return "ERROR"
+
+    return default_level.upper()
+
+
 def setup_logging(
-    level: str = "INFO",
+    level: str = "WARNING",
     format_json: bool = False,
     colored: bool = True,
     log_file: Optional[str] = None,
+    stream: Optional[TextIO] = None,
 ) -> None:
     """
     Setup logging configuration for the application.
@@ -116,23 +142,23 @@ def setup_logging(
         format_json: Whether to use JSON formatting
         colored: Whether to use colored output (only for console)
         log_file: Optional log file path
+        stream: Optional stream to write logs to (defaults to stderr)
     """
-    # Remove existing handlers
+    target_stream = stream or sys.stderr
+
     root_logger = logging.getLogger()
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)
 
-    # Set log level
-    log_level = getattr(logging, level.upper(), logging.INFO)
+    log_level = getattr(logging, level.upper(), logging.WARNING)
     root_logger.setLevel(log_level)
 
-    # Console handler
-    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler = logging.StreamHandler(target_stream)
     console_handler.setLevel(log_level)
 
     if format_json:
         console_formatter = JSONFormatter()
-    elif colored and sys.stdout.isatty():
+    elif colored and target_stream.isatty():
         console_formatter = ColoredFormatter(
             "%(asctime)s - %(levelname)s - %(name)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
         )

@@ -20,7 +20,7 @@ class Config:
 
     # Logging settings
     debug: bool = field(default=False)
-    log_level: str = field(default="INFO")
+    log_level: str = field(default="WARNING")
 
     # Performance settings
     max_results: int = field(default=1000)
@@ -59,7 +59,7 @@ class Config:
             location=os.getenv("BQ_LOCATION"),
             price_per_tib=float(os.getenv("SAFE_PRICE_PER_TIB", "5.0")),
             debug=bool(os.getenv("DEBUG")),
-            log_level=os.getenv("LOG_LEVEL", "INFO"),
+            log_level=os.getenv("LOG_LEVEL", "WARNING"),
             max_results=int(os.getenv("MAX_RESULTS", "1000")),
             query_timeout=int(os.getenv("QUERY_TIMEOUT", "30")),
             cache_enabled=os.getenv("CACHE_ENABLED", "true").lower() == "true",

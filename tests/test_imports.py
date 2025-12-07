@@ -123,12 +123,13 @@ class TestErrorHandling:
         from google.auth.exceptions import DefaultCredentialsError
 
         from mcp_bigquery.bigquery_client import get_bigquery_client
+        from mcp_bigquery.exceptions import AuthenticationError
 
         with patch("google.cloud.bigquery.Client") as mock_client:
             mock_client.side_effect = DefaultCredentialsError("No credentials")
 
-            with pytest.raises(DefaultCredentialsError) as exc_info:
-                get_bigquery_client()
+            with pytest.raises(AuthenticationError) as exc_info:
+                get_bigquery_client(use_cache=False)
 
             assert "gcloud auth application-default login" in str(exc_info.value)
 

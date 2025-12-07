@@ -3,7 +3,7 @@
 import hashlib
 import json
 import time
-from typing import Any, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 from .config import get_config
 from .constants import CACHE_KEY_PREFIX
@@ -187,26 +187,33 @@ class BigQueryClientCache:
         self._clients: dict[str, Any] = {}
         self._client_locks: dict[str, Any] = {}
 
-    def get_client(self, project_id: Optional[str] = None, location: Optional[str] = None) -> Any:
+    def get_client(
+        self,
+        project_id: Optional[str] = None,
+        location: Optional[str] = None,
+        builder: Optional[Callable[[Optional[str], Optional[str]], Any]] = None,
+    ) -> Any:
         """
         Get or create a BigQuery client.
 
         Args:
             project_id: GCP project ID
             location: BigQuery location
+            builder: Callable used to build a new client when cache misses
 
         Returns:
             BigQuery client instance
         """
-        from google.cloud import bigquery
-
-        from .bigquery_client import get_bigquery_client
+        if builder is None:
+            from .clients.factory import (
+                _instantiate_client as builder,  # type: ignore[attr-defined]
+            )
 
         key = f"{project_id or 'default'}:{location or 'default'}"
 
         if key not in self._clients:
             logger.info(f"Creating new BigQuery client for {key}")
-            self._clients[key] = get_bigquery_client(project_id, location)
+            self._clients[key] = builder(project_id, location)
         else:
             logger.debug(f"Reusing BigQuery client for {key}")
 
