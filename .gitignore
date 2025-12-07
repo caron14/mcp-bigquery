@@ -67,7 +67,11 @@ NOTES.md
 local/
 scratch/
 tmp/
+.cache/*
+.claude/*
+.serena/*
 CLAUDE.md
+AGENTS.md
 
 # Backup files
 *.bak

@@ -1,7 +1,6 @@
 """Pytest configuration and fixtures for mcp-bigquery tests."""
 
 import os
-import sys
 
 import pytest
 
@@ -42,11 +41,6 @@ def pytest_collection_modifyitems(config, items):
                 item.add_marker(skip_integration)
         elif "test_imports" in str(item.fspath):
             item.add_marker(pytest.mark.unit)
-
-        # Skip async tests if running in incompatible environment
-        if "asyncio" in [mark.name for mark in item.iter_markers()]:
-            if sys.version_info < (3, 9):
-                item.add_marker(pytest.mark.skip(reason="Requires Python 3.9+ for async"))
 
 
 @pytest.fixture(scope="session")

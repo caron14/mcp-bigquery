@@ -4,16 +4,14 @@ import os
 
 import pytest
 
-# Skip all tests in this file if no credentials
+RUN_BIGQUERY_TESTS = os.environ.get("RUN_BIGQUERY_TESTS") == "1"
+ADC_PATH = os.path.expanduser("~/.config/gcloud/application_default_credentials.json")
+HAS_CREDENTIALS = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") or os.path.exists(ADC_PATH)
+
+# Skip integration tests unless explicitly enabled and credentials exist.
 pytestmark = pytest.mark.skipif(
-    not (
-        os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") is not None
-        or os.path.exists(
-            os.path.expanduser("~/.config/gcloud/application_default_credentials.json")
-        )
-        or os.environ.get("GOOGLE_CLOUD_PROJECT") is not None
-    ),
-    reason="BigQuery credentials not available",
+    not (RUN_BIGQUERY_TESTS and HAS_CREDENTIALS),
+    reason="BigQuery credentials not available or RUN_BIGQUERY_TESTS!=1",
 )
 
 

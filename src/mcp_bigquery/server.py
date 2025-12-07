@@ -19,11 +19,6 @@ from .info_schema import analyze_query_performance, query_info_schema
 from .schema_explorer import describe_table, get_table_info, list_datasets, list_tables
 from .sql_analyzer import SQLAnalyzer
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO if os.environ.get("DEBUG") else logging.WARNING,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
 logger = logging.getLogger(__name__)
 
 server = Server("mcp-bigquery")

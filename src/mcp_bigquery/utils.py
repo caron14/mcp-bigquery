@@ -3,7 +3,8 @@
 import functools
 import re
 import time
-from typing import Any, Callable, Optional, TypeVar, Union
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from google.api_core.exceptions import GoogleAPIError
 from google.cloud.exceptions import BadRequest
@@ -18,7 +19,7 @@ logger = get_logger(__name__)
 T = TypeVar("T")
 
 
-def extract_error_location(error_message: str) -> Optional[ErrorLocation]:
+def extract_error_location(error_message: str) -> ErrorLocation | None:
     """
     Extract error location from BigQuery error message.
 
@@ -34,7 +35,7 @@ def extract_error_location(error_message: str) -> Optional[ErrorLocation]:
     return None
 
 
-def format_error_response(error: Union[Exception, MCPBigQueryError]) -> ErrorInfo:
+def format_error_response(error: Exception | MCPBigQueryError) -> ErrorInfo:
     """
     Format an error into a standard error response.
 
@@ -71,14 +72,14 @@ def handle_bigquery_exceptions(func: Callable[..., T]) -> Callable[..., T]:
         except BadRequest as e:
             error_msg = str(e)
             location = extract_error_location(error_msg)
-            raise SQLValidationError(error_msg, location=location)
+            raise SQLValidationError(error_msg, location=location) from e
         except GoogleAPIError as e:
-            raise handle_bigquery_error(e)
+            raise handle_bigquery_error(e) from e
         except MCPBigQueryError:
             raise
         except Exception as e:
             logger.exception(f"Unexpected error in {func.__name__}")
-            raise MCPBigQueryError(str(e))
+            raise MCPBigQueryError(str(e)) from e
 
     @functools.wraps(func)
     def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -87,14 +88,14 @@ def handle_bigquery_exceptions(func: Callable[..., T]) -> Callable[..., T]:
         except BadRequest as e:
             error_msg = str(e)
             location = extract_error_location(error_msg)
-            raise SQLValidationError(error_msg, location=location)
+            raise SQLValidationError(error_msg, location=location) from e
         except GoogleAPIError as e:
-            raise handle_bigquery_error(e)
+            raise handle_bigquery_error(e) from e
         except MCPBigQueryError:
             raise
         except Exception as e:
             logger.exception(f"Unexpected error in {func.__name__}")
-            raise MCPBigQueryError(str(e))
+            raise MCPBigQueryError(str(e)) from e
 
     # Return appropriate wrapper based on function type
     import asyncio
@@ -105,7 +106,7 @@ def handle_bigquery_exceptions(func: Callable[..., T]) -> Callable[..., T]:
         return sync_wrapper
 
 
-def validate_sql_length(sql: str, max_length: Optional[int] = None) -> None:
+def validate_sql_length(sql: str, max_length: int | None = None) -> None:
     """
     Validate SQL query length.
 
@@ -130,7 +131,7 @@ def validate_sql_length(sql: str, max_length: Optional[int] = None) -> None:
         )
 
 
-def validate_parameters(params: Optional[dict[str, Any]], max_count: Optional[int] = None) -> None:
+def validate_parameters(params: dict[str, Any] | None, max_count: int | None = None) -> None:
     """
     Validate query parameters.
 
@@ -221,7 +222,7 @@ def format_bytes(bytes_value: int) -> str:
         return f"{bytes_value} bytes"
 
 
-def calculate_cost_estimate(bytes_processed: int, price_per_tib: Optional[float] = None) -> float:
+def calculate_cost_estimate(bytes_processed: int, price_per_tib: float | None = None) -> float:
     """
     Calculate cost estimate for BigQuery query.
 
@@ -246,7 +247,7 @@ def calculate_cost_estimate(bytes_processed: int, price_per_tib: Optional[float]
     return tib_processed * price_per_tib
 
 
-def rate_limit(calls_per_minute: Optional[int] = None) -> Callable:
+def rate_limit(calls_per_minute: int | None = None) -> Callable:
     """
     Decorator to implement rate limiting.
 
@@ -325,7 +326,7 @@ def rate_limit(calls_per_minute: Optional[int] = None) -> Callable:
     return decorator
 
 
-def memoize(ttl: Optional[int] = None) -> Callable:
+def memoize(ttl: int | None = None) -> Callable:
     """
     Decorator to cache function results.
 

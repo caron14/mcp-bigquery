@@ -37,6 +37,24 @@ mcp-bigquery --version
 python -m mcp_bigquery
 ```
 
+## Logging & Output Controls (v0.4.2)
+
+The CLI now exposes unified logging controls backed by `mcp_bigquery.logging_config`. Logs default to `WARNING` on stderr so stdout stays clean for tool responses.
+
+```bash
+# Increase or decrease verbosity
+mcp-bigquery --verbose          # INFO on stderr
+mcp-bigquery -vv                # DEBUG
+mcp-bigquery --quiet            # ERROR
+mcp-bigquery --log-level=INFO   # Explicit override
+
+# Structured output
+mcp-bigquery --json-logs        # Emit JSON lines
+mcp-bigquery --no-color         # Disable ANSI colors
+```
+
+Combine these flags with `DEBUG=true` in your environment when diagnosing CLI integrations.
+
 ## Authentication
 
 ### Quick Setup (Local Development)

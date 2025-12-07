@@ -62,10 +62,12 @@ class TestImports:
 
             # Test internal modules
             from mcp_bigquery.bigquery_client import get_bigquery_client
-            from mcp_bigquery.server import build_query_parameters  # noqa: F401
-            from mcp_bigquery.server import extract_error_location  # noqa: F401
-            from mcp_bigquery.server import handle_call_tool  # noqa: F401
-            from mcp_bigquery.server import handle_list_tools  # noqa: F401
+            from mcp_bigquery.server import (  # noqa: F401
+                build_query_parameters,
+                extract_error_location,
+                handle_call_tool,
+                handle_list_tools,
+            )
 
             assert get_bigquery_client is not None
             assert extract_error_location is not None
@@ -123,12 +125,13 @@ class TestErrorHandling:
         from google.auth.exceptions import DefaultCredentialsError
 
         from mcp_bigquery.bigquery_client import get_bigquery_client
+        from mcp_bigquery.exceptions import AuthenticationError
 
         with patch("google.cloud.bigquery.Client") as mock_client:
             mock_client.side_effect = DefaultCredentialsError("No credentials")
 
-            with pytest.raises(DefaultCredentialsError) as exc_info:
-                get_bigquery_client()
+            with pytest.raises(AuthenticationError) as exc_info:
+                get_bigquery_client(use_cache=False)
 
             assert "gcloud auth application-default login" in str(exc_info.value)
 

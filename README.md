@@ -309,6 +309,7 @@ If issues persist, enable debug mode:
 
 | Version | Release Date | Key Features |
 |---------|--------------|--------------|
+| v0.4.2 | 2025-12-08 | Modular schema explorer, unified client/logging controls |
 | v0.4.1 | 2025-01-22 | Better error handling, debug logging |
 | v0.4.0 | 2025-01-22 | Added 6 schema discovery tools |
 | v0.3.0 | 2025-01-17 | SQL analysis engine |

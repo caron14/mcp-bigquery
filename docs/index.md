@@ -17,6 +17,12 @@
 
 The `mcp-bigquery` package provides a comprehensive MCP server for BigQuery SQL validation, dry-run analysis, query structure analysis, and schema discovery. This server provides eleven tools for validating, analyzing, understanding BigQuery SQL queries, and exploring BigQuery schemas without executing queries.
 
+!!! info "What's new in v0.4.2"
+    - Schema explorer and INFORMATION_SCHEMA logic now live in dedicated subpackages with shared formatters.
+    - BigQuery client creation is centralized in `mcp_bigquery.clients` so every tool inherits the same retries, caching, and dry-run safeguards.
+    - Logging defaults to `WARNING` on stderr with `--verbose/--quiet`/`--json-logs` CLI switches for fine-grained control. See [Development](development.md#logging-and-debugging) for details.
+    - Need a quick tour of the new layout? Read the [Module Responsibility Map](module_map.md).
+
 !!! warning "Important"
     This server does **NOT** execute queries. All operations are dry-run only. Cost estimates are approximations based on bytes processed.
 
@@ -30,12 +36,12 @@ The `mcp-bigquery` package provides a comprehensive MCP server for BigQuery SQL 
 - **Enhanced Syntax Validation**: Detailed error reporting with suggestions
 [→ SQL Analysis Guide](usage.md#sql-analysis)
 
-### 📊 Schema Discovery & Metadata (v0.4.0)
+### 📊 Schema Explorer & Metadata (updated v0.4.2)
 - **Dataset Explorer**: List and explore datasets in your BigQuery project
-- **Table Browser**: Browse tables with metadata, partitioning, and clustering info
+- **Table Browser**: Browse tables with metadata, partitioning, and clustering info via dedicated formatters
 - **Schema Inspector**: Get detailed table schemas with nested field support
 - **INFORMATION_SCHEMA Access**: Safe querying of BigQuery metadata views
-- **Comprehensive Table Info**: Access all table metadata including encryption and time travel
+- **Comprehensive Table Info**: Access all table metadata including encryption and time travel using the new modular helpers
 [→ Schema Discovery Guide](usage.md#schema-discovery)
 
 ### 🚀 Performance Analysis
@@ -48,6 +54,7 @@ The `mcp-bigquery` package provides a comprehensive MCP server for BigQuery SQL 
 - **Parameter Support**: Validate parameterized queries
 - **Safe Operations**: All operations are dry-run only, no query execution
 - **BigQuery-Specific**: Support for ARRAY, STRUCT, and other BigQuery features
+- **Structured Logging**: CLI exposes `--verbose/--quiet`, `--json-logs`, and `--no-color` flags governed by `logging_config`
 [→ Advanced Features](usage.md#advanced-features)
 
 ## Quick Example

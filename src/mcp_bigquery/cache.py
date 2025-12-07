@@ -3,7 +3,8 @@
 import hashlib
 import json
 import time
-from typing import Any, Optional, Union
+from collections.abc import Callable
+from typing import Any
 
 from .config import get_config
 from .constants import CACHE_KEY_PREFIX
@@ -65,7 +66,7 @@ class Cache:
         key_str = json.dumps(key_data, sort_keys=True, default=str)
         return hashlib.md5(key_str.encode()).hexdigest()
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """
         Get value from cache.
 
@@ -92,7 +93,7 @@ class Cache:
         logger.debug(f"Cache miss: {key}")
         return None
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> None:
         """
         Set value in cache.
 
@@ -187,26 +188,33 @@ class BigQueryClientCache:
         self._clients: dict[str, Any] = {}
         self._client_locks: dict[str, Any] = {}
 
-    def get_client(self, project_id: Optional[str] = None, location: Optional[str] = None) -> Any:
+    def get_client(
+        self,
+        project_id: str | None = None,
+        location: str | None = None,
+        builder: Callable[[str | None, str | None], Any] | None = None,
+    ) -> Any:
         """
         Get or create a BigQuery client.
 
         Args:
             project_id: GCP project ID
             location: BigQuery location
+            builder: Callable used to build a new client when cache misses
 
         Returns:
             BigQuery client instance
         """
-        from google.cloud import bigquery
-
-        from .bigquery_client import get_bigquery_client
+        if builder is None:
+            from .clients.factory import (
+                _instantiate_client as builder,  # type: ignore[attr-defined]
+            )
 
         key = f"{project_id or 'default'}:{location or 'default'}"
 
         if key not in self._clients:
             logger.info(f"Creating new BigQuery client for {key}")
-            self._clients[key] = get_bigquery_client(project_id, location)
+            self._clients[key] = builder(project_id, location)
         else:
             logger.debug(f"Reusing BigQuery client for {key}")
 
@@ -219,9 +227,9 @@ class BigQueryClientCache:
 
 
 # Global cache instances
-_query_cache: Optional[Cache] = None
-_schema_cache: Optional[Cache] = None
-_client_cache: Optional[BigQueryClientCache] = None
+_query_cache: Cache | None = None
+_schema_cache: Cache | None = None
+_client_cache: BigQueryClientCache | None = None
 
 
 def get_query_cache() -> Cache:
@@ -264,7 +272,7 @@ def clear_all_caches() -> None:
 
 
 # Cache decorators
-def cache_query_result(ttl: Optional[int] = None):
+def cache_query_result(ttl: int | None = None):
     """
     Decorator to cache query results.
 
@@ -301,7 +309,7 @@ def cache_query_result(ttl: Optional[int] = None):
     return decorator
 
 
-def cache_schema_info(ttl: Optional[int] = None):
+def cache_schema_info(ttl: int | None = None):
     """
     Decorator to cache schema information.
 

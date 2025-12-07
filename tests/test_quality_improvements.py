@@ -1,7 +1,8 @@
 """Tests for code quality improvements."""
 
+import asyncio
 import time
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -327,25 +328,25 @@ class TestCache:
         """Test BigQueryClientCache."""
         from mcp_bigquery.cache import BigQueryClientCache
 
-        with patch("mcp_bigquery.bigquery_client.get_bigquery_client") as mock_get_client:
+        with patch("mcp_bigquery.clients.factory._instantiate_client") as mock_builder:
             mock_client = Mock()
-            mock_get_client.return_value = mock_client
+            mock_builder.return_value = mock_client
 
             cache = BigQueryClientCache()
 
             # First call creates client
             client1 = cache.get_client("project1", "US")
-            assert mock_get_client.called
+            assert mock_builder.called
 
             # Second call reuses client
-            mock_get_client.reset_mock()
+            mock_builder.reset_mock()
             client2 = cache.get_client("project1", "US")
-            assert not mock_get_client.called
+            assert not mock_builder.called
             assert client1 is client2
 
             # Different project creates new client
-            client3 = cache.get_client("project2", "US")
-            assert mock_get_client.called
+            cache.get_client("project2", "US")
+            assert mock_builder.called
 
 
 class TestLogging:
@@ -376,6 +377,32 @@ class TestLogging:
         assert data["message"] == "Test message"
         assert data["module"] == "test"
         assert "timestamp" in data
+
+    def test_setup_logging_uses_stderr(self, capsys):
+        """Ensure setup_logging sends warnings to stderr by default."""
+        import logging
+
+        from mcp_bigquery.logging_config import setup_logging
+
+        setup_logging(level="WARNING", colored=False)
+        logger = logging.getLogger("mcp_bigquery.logging_test")
+
+        logger.info("info message suppressed")
+        logger.warning("warn message emitted")
+
+        captured = capsys.readouterr()
+        assert captured.out == ""
+        assert "warn message emitted" in captured.err
+        assert "info message suppressed" not in captured.err
+
+    def test_resolve_log_level_controls_verbosity(self):
+        """resolve_log_level should respect verbose/quiet toggles."""
+        from mcp_bigquery.logging_config import resolve_log_level
+
+        assert resolve_log_level(default_level="WARNING", verbose=1) == "INFO"
+        assert resolve_log_level(default_level="WARNING", verbose=2) == "DEBUG"
+        assert resolve_log_level(default_level="INFO", quiet=1) == "ERROR"
+        assert resolve_log_level(default_level="INFO", quiet=2) == "CRITICAL"
 
     def test_context_logger(self):
         """Test ContextLogger."""
@@ -418,7 +445,3 @@ class TestLogging:
 
         result = sync_func()
         assert result == "result"
-
-
-# Import asyncio for async tests
-import asyncio
