@@ -1,6 +1,6 @@
 """Custom exceptions for MCP BigQuery server."""
 
-from typing import Any, Optional
+from typing import Any
 
 from google.api_core.exceptions import GoogleAPIError
 
@@ -8,7 +8,7 @@ from google.api_core.exceptions import GoogleAPIError
 class MCPBigQueryError(Exception):
     """Base exception for MCP BigQuery server."""
 
-    def __init__(self, message: str, code: Optional[str] = None, details: Optional[Any] = None):
+    def __init__(self, message: str, code: str | None = None, details: Any | None = None):
         super().__init__(message)
         self.message = message
         self.code = code or "UNKNOWN_ERROR"
@@ -28,8 +28,8 @@ class SQLValidationError(MCPBigQueryError):
     def __init__(
         self,
         message: str,
-        location: Optional[tuple[int, int]] = None,
-        details: Optional[Any] = None,
+        location: tuple[int, int] | None = None,
+        details: Any | None = None,
     ):
         super().__init__(message, code="INVALID_SQL", details=details)
         self.location = location
@@ -45,28 +45,28 @@ class SQLValidationError(MCPBigQueryError):
 class SQLAnalysisError(MCPBigQueryError):
     """SQL analysis error."""
 
-    def __init__(self, message: str, details: Optional[Any] = None):
+    def __init__(self, message: str, details: Any | None = None):
         super().__init__(message, code="ANALYSIS_ERROR", details=details)
 
 
 class AuthenticationError(MCPBigQueryError):
     """Authentication error."""
 
-    def __init__(self, message: str, details: Optional[Any] = None):
+    def __init__(self, message: str, details: Any | None = None):
         super().__init__(message, code="AUTH_ERROR", details=details)
 
 
 class ConfigurationError(MCPBigQueryError):
     """Configuration error."""
 
-    def __init__(self, message: str, details: Optional[Any] = None):
+    def __init__(self, message: str, details: Any | None = None):
         super().__init__(message, code="CONFIG_ERROR", details=details)
 
 
 class DatasetNotFoundError(MCPBigQueryError):
     """Dataset not found error."""
 
-    def __init__(self, dataset_id: str, project_id: Optional[str] = None):
+    def __init__(self, dataset_id: str, project_id: str | None = None):
         message = (
             f"Dataset not found: {project_id}.{dataset_id}"
             if project_id
@@ -80,7 +80,7 @@ class DatasetNotFoundError(MCPBigQueryError):
 class TableNotFoundError(MCPBigQueryError):
     """Table not found error."""
 
-    def __init__(self, table_id: str, dataset_id: str, project_id: Optional[str] = None):
+    def __init__(self, table_id: str, dataset_id: str, project_id: str | None = None):
         message = (
             f"Table not found: {project_id}.{dataset_id}.{table_id}"
             if project_id
@@ -95,7 +95,7 @@ class TableNotFoundError(MCPBigQueryError):
 class PermissionError(MCPBigQueryError):
     """Permission error."""
 
-    def __init__(self, message: str, resource: Optional[str] = None):
+    def __init__(self, message: str, resource: str | None = None):
         details = {"resource": resource} if resource else None
         super().__init__(message, code="PERMISSION_DENIED", details=details)
 
@@ -103,7 +103,7 @@ class PermissionError(MCPBigQueryError):
 class RateLimitError(MCPBigQueryError):
     """Rate limit error."""
 
-    def __init__(self, message: str = "Rate limit exceeded", retry_after: Optional[int] = None):
+    def __init__(self, message: str = "Rate limit exceeded", retry_after: int | None = None):
         details = {"retry_after": retry_after} if retry_after else None
         super().__init__(message, code="RATE_LIMIT_EXCEEDED", details=details)
 
@@ -111,7 +111,7 @@ class RateLimitError(MCPBigQueryError):
 class InvalidParameterError(MCPBigQueryError):
     """Invalid parameter error."""
 
-    def __init__(self, parameter: str, message: str, expected_type: Optional[str] = None):
+    def __init__(self, parameter: str, message: str, expected_type: str | None = None):
         full_message = f"Invalid parameter '{parameter}': {message}"
         details = (
             {"parameter": parameter, "expected_type": expected_type}

@@ -1,6 +1,6 @@
 """Type definitions for MCP BigQuery server."""
 
-from typing import Any, List, Optional, TypedDict, Union
+from typing import Any, TypedDict
 
 
 # Base error types
@@ -16,8 +16,8 @@ class ErrorInfo(TypedDict):
 
     code: str
     message: str
-    location: Optional[ErrorLocation]
-    details: Optional[List[Any]]
+    location: ErrorLocation | None
+    details: list[Any] | None
 
 
 # SQL validation response types
@@ -38,10 +38,10 @@ class InvalidSQLResponse(TypedDict):
 class TableReference(TypedDict):
     """BigQuery table reference."""
 
-    project: Optional[str]
+    project: str | None
     dataset: str
     table: str
-    full_name: Optional[str]
+    full_name: str | None
 
 
 class FullTableReference(TypedDict):
@@ -50,7 +50,7 @@ class FullTableReference(TypedDict):
     project: str
     dataset: str
     table: str
-    full_id: Optional[str]
+    full_id: str | None
 
 
 # Schema field types
@@ -60,8 +60,8 @@ class SchemaField(TypedDict):
     name: str
     type: str
     mode: str
-    description: Optional[str]
-    fields: Optional[List["SchemaField"]]  # For nested fields
+    description: str | None
+    fields: list["SchemaField"] | None  # For nested fields
 
 
 # Dry-run response types
@@ -70,8 +70,8 @@ class DryRunSuccessResponse(TypedDict):
 
     totalBytesProcessed: int
     usdEstimate: float
-    referencedTables: List[FullTableReference]
-    schemaPreview: List[SchemaField]
+    referencedTables: list[FullTableReference]
+    schemaPreview: list[SchemaField]
 
 
 class DryRunErrorResponse(TypedDict):
@@ -93,17 +93,17 @@ class QueryStructureResponse(TypedDict):
     has_union: bool
     table_count: int
     complexity_score: int
-    join_types: List[str]
-    functions_used: List[str]
+    join_types: list[str]
+    functions_used: list[str]
 
 
 # Dependency extraction types
 class DependencyResponse(TypedDict):
     """Dependency extraction response."""
 
-    tables: List[TableReference]
-    columns: List[str]
-    dependency_graph: dict[str, List[str]]
+    tables: list[TableReference]
+    columns: list[str]
+    dependency_graph: dict[str, list[str]]
     table_count: int
     column_count: int
 
@@ -129,8 +129,8 @@ class SyntaxValidationResponse(TypedDict):
     """Enhanced syntax validation response."""
 
     is_valid: bool
-    issues: List[ValidationIssue]
-    suggestions: List[str]
+    issues: list[ValidationIssue]
+    suggestions: list[str]
     bigquery_specific: BigQuerySpecificFeatures
 
 
@@ -143,10 +143,10 @@ class DatasetInfo(TypedDict):
     location: str
     created: str
     modified: str
-    description: Optional[str]
+    description: str | None
     labels: dict[str, str]
-    default_table_expiration_ms: Optional[int]
-    default_partition_expiration_ms: Optional[int]
+    default_table_expiration_ms: int | None
+    default_partition_expiration_ms: int | None
 
 
 class DatasetListResponse(TypedDict):
@@ -154,7 +154,7 @@ class DatasetListResponse(TypedDict):
 
     project: str
     dataset_count: int
-    datasets: List[DatasetInfo]
+    datasets: list[DatasetInfo]
 
 
 # Table partitioning and clustering types
@@ -162,16 +162,16 @@ class PartitioningInfo(TypedDict):
     """Table partitioning information."""
 
     type: str
-    field: Optional[str]
-    expiration_ms: Optional[int]
-    require_partition_filter: Optional[bool]
+    field: str | None
+    expiration_ms: int | None
+    require_partition_filter: bool | None
 
 
 class TimePartitioning(TypedDict):
     """Time-based partitioning details."""
 
     type: str
-    field: Optional[str]
+    field: str | None
     require_partition_filter: bool
 
 
@@ -181,10 +181,10 @@ class TableStatistics(TypedDict):
 
     num_bytes: int
     num_rows: int
-    num_long_term_bytes: Optional[int]
-    creation_time: Optional[str]
-    num_active_logical_bytes: Optional[int]
-    num_long_term_logical_bytes: Optional[int]
+    num_long_term_bytes: int | None
+    creation_time: str | None
+    num_active_logical_bytes: int | None
+    num_long_term_logical_bytes: int | None
 
 
 class TableInfo(TypedDict):
@@ -196,13 +196,13 @@ class TableInfo(TypedDict):
     table_type: str
     created: str
     modified: str
-    description: Optional[str]
+    description: str | None
     labels: dict[str, str]
     num_bytes: int
     num_rows: int
     location: str
-    partitioning: Optional[PartitioningInfo]
-    clustering_fields: Optional[List[str]]
+    partitioning: PartitioningInfo | None
+    clustering_fields: list[str] | None
 
 
 class TableListResponse(TypedDict):
@@ -211,7 +211,7 @@ class TableListResponse(TypedDict):
     dataset_id: str
     project: str
     table_count: int
-    tables: List[TableInfo]
+    tables: list[TableInfo]
 
 
 # Describe table response
@@ -222,14 +222,14 @@ class DescribeTableResponse(TypedDict):
     dataset_id: str
     project: str
     table_type: str
-    schema: List[SchemaField]
-    description: Optional[str]
+    schema: list[SchemaField]
+    description: str | None
     created: str
     modified: str
     statistics: TableStatistics
-    partitioning: Optional[PartitioningInfo]
-    clustering_fields: Optional[List[str]]
-    formatted_schema: Optional[str]
+    partitioning: PartitioningInfo | None
+    clustering_fields: list[str] | None
+    formatted_schema: str | None
 
 
 # Comprehensive table info response
@@ -242,7 +242,7 @@ class TimeTravelInfo(TypedDict):
 class ClusteringInfo(TypedDict):
     """Clustering configuration."""
 
-    fields: List[str]
+    fields: list[str]
 
 
 class ComprehensiveTableInfo(TypedDict):
@@ -255,20 +255,20 @@ class ComprehensiveTableInfo(TypedDict):
     table_type: str
     created: str
     modified: str
-    expires: Optional[str]
-    description: Optional[str]
+    expires: str | None
+    description: str | None
     labels: dict[str, str]
     location: str
     self_link: str
     etag: str
-    friendly_name: Optional[str]
+    friendly_name: str | None
     statistics: TableStatistics
-    time_travel: Optional[TimeTravelInfo]
-    partitioning: Optional[dict[str, Any]]
-    clustering: Optional[ClusteringInfo]
-    encryption_configuration: Optional[dict[str, str]]
-    require_partition_filter: Optional[bool]
-    table_constraints: Optional[dict[str, Any]]
+    time_travel: TimeTravelInfo | None
+    partitioning: dict[str, Any] | None
+    clustering: ClusteringInfo | None
+    encryption_configuration: dict[str, str] | None
+    require_partition_filter: bool | None
+    table_constraints: dict[str, Any] | None
 
 
 # INFORMATION_SCHEMA response types
@@ -287,7 +287,7 @@ class InfoSchemaResponse(TypedDict):
     dataset_id: str
     project: str
     query: str
-    schema: List[SchemaField]
+    schema: list[SchemaField]
     metadata: InfoSchemaMetadata
     info: str
 
@@ -309,7 +309,7 @@ class QueryAnalysis(TypedDict):
     bytes_billed: int
     gigabytes_processed: float
     estimated_cost_usd: float
-    referenced_tables: List[FullTableReference]
+    referenced_tables: list[FullTableReference]
     table_count: int
 
 
@@ -326,11 +326,11 @@ class PerformanceAnalysisResponse(TypedDict):
     query_analysis: QueryAnalysis
     performance_score: int
     performance_rating: str
-    optimization_suggestions: List[OptimizationSuggestion]
+    optimization_suggestions: list[OptimizationSuggestion]
     suggestion_count: int
     estimated_execution: EstimatedExecution
 
 
 # Union types for responses
-SQLValidationResponse = Union[ValidSQLResponse, InvalidSQLResponse]
-DryRunResponse = Union[DryRunSuccessResponse, DryRunErrorResponse]
+SQLValidationResponse = ValidSQLResponse | InvalidSQLResponse
+DryRunResponse = DryRunSuccessResponse | DryRunErrorResponse

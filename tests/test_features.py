@@ -1,24 +1,13 @@
 """Tests for MCP BigQuery features - all tools and functionality."""
 
-import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
-from google.cloud import bigquery
-from google.cloud.exceptions import BadRequest, NotFound
+from google.cloud.exceptions import NotFound
 
 from mcp_bigquery.info_schema import analyze_query_performance, query_info_schema
 from mcp_bigquery.schema_explorer import describe_table, get_table_info, list_datasets, list_tables
-from mcp_bigquery.server import (
-    analyze_query_structure,
-    build_query_parameters,
-    dry_run_sql,
-    extract_dependencies,
-    extract_error_location,
-    handle_list_tools,
-    validate_query_syntax,
-    validate_sql,
-)
+from mcp_bigquery.server import build_query_parameters, extract_error_location, handle_list_tools
 from mcp_bigquery.sql_analyzer import SQLAnalyzer
 
 
@@ -256,7 +245,7 @@ class TestSchemaExplorer:
             tables = []
             table_refs = []
 
-            for i, table_type in enumerate(["TABLE", "VIEW", "EXTERNAL"]):
+            for table_type in ["TABLE", "VIEW", "EXTERNAL"]:
                 mock_table = MagicMock()
                 mock_table.table_id = f"test_{table_type.lower()}"
                 mock_table.dataset_id = "test_dataset"

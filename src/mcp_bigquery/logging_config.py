@@ -4,7 +4,7 @@ import json
 import logging
 import sys
 from datetime import datetime
-from typing import Any, Optional, TextIO
+from typing import Any, TextIO
 
 
 class JSONFormatter(logging.Formatter):
@@ -105,7 +105,7 @@ class ContextLogger:
 def resolve_log_level(
     *,
     default_level: str = "WARNING",
-    explicit_level: Optional[str] = None,
+    explicit_level: str | None = None,
     verbose: int = 0,
     quiet: int = 0,
 ) -> str:
@@ -131,8 +131,8 @@ def setup_logging(
     level: str = "WARNING",
     format_json: bool = False,
     colored: bool = True,
-    log_file: Optional[str] = None,
-    stream: Optional[TextIO] = None,
+    log_file: str | None = None,
+    stream: TextIO | None = None,
 ) -> None:
     """
     Setup logging configuration for the application.

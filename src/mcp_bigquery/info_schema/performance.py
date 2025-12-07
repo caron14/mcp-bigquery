@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from google.cloud import bigquery
 from google.cloud.exceptions import BadRequest
@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 
 async def analyze_query_performance(
     sql: str,
-    project_id: Optional[str] = None,
+    project_id: str | None = None,
 ) -> dict[str, Any]:
     """Dry-run a query and provide performance insights."""
     try:

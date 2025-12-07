@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from datetime import datetime
-from typing import Any, Iterable, Optional
+from typing import Any
 
 from tabulate import tabulate
 
 
-def serialize_timestamp(value: Optional[datetime]) -> Optional[str]:
+def serialize_timestamp(value: datetime | None) -> str | None:
     """Return ISO 8601 strings for BigQuery timestamps."""
     return value.isoformat() if value else None
 
@@ -43,7 +44,7 @@ def format_schema_table(schema: Iterable[dict[str, Any]]) -> str:
     return tabulate(rows, headers=headers, tablefmt="grid")
 
 
-def partitioning_overview(table: Any) -> Optional[dict[str, Any]]:
+def partitioning_overview(table: Any) -> dict[str, Any] | None:
     """Extract lightweight partitioning information for table listings."""
     if not getattr(table, "partitioning_type", None):
         return None
@@ -57,7 +58,7 @@ def partitioning_overview(table: Any) -> Optional[dict[str, Any]]:
     return info
 
 
-def partitioning_details(table: Any) -> Optional[dict[str, Any]]:
+def partitioning_details(table: Any) -> dict[str, Any] | None:
     """Extract detailed partitioning information for table metadata."""
     if not getattr(table, "partitioning_type", None):
         return None
@@ -86,13 +87,13 @@ def partitioning_details(table: Any) -> Optional[dict[str, Any]]:
     return info
 
 
-def clustering_fields(table: Any) -> Optional[list[str]]:
+def clustering_fields(table: Any) -> list[str] | None:
     """Return clustering fields if present."""
     fields = getattr(table, "clustering_fields", None)
     return list(fields) if fields else None
 
 
-def streaming_buffer_info(table: Any) -> Optional[dict[str, Any]]:
+def streaming_buffer_info(table: Any) -> dict[str, Any] | None:
     """Return streaming buffer metadata when available."""
     buffer = getattr(table, "streaming_buffer", None)
     if not buffer:
@@ -105,7 +106,7 @@ def streaming_buffer_info(table: Any) -> Optional[dict[str, Any]]:
     }
 
 
-def materialized_view_info(table: Any) -> Optional[dict[str, Any]]:
+def materialized_view_info(table: Any) -> dict[str, Any] | None:
     """Return materialized view metadata when available."""
     if getattr(table, "table_type", None) != "MATERIALIZED_VIEW":
         return None
@@ -118,7 +119,7 @@ def materialized_view_info(table: Any) -> Optional[dict[str, Any]]:
     }
 
 
-def external_table_info(table: Any) -> Optional[dict[str, Any]]:
+def external_table_info(table: Any) -> dict[str, Any] | None:
     """Return external table configuration when available."""
     if getattr(table, "table_type", None) != "EXTERNAL":
         return None

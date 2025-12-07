@@ -2,7 +2,7 @@
 
 INFO_SCHEMA_TEMPLATES = {
     "tables": """
-        SELECT 
+        SELECT
             table_catalog,
             table_schema,
             table_name,
@@ -15,7 +15,7 @@ INFO_SCHEMA_TEMPLATES = {
         {limit_clause}
     """,
     "columns": """
-        SELECT 
+        SELECT
             table_catalog,
             table_schema,
             table_name,
@@ -31,7 +31,7 @@ INFO_SCHEMA_TEMPLATES = {
         {limit_clause}
     """,
     "table_storage": """
-        SELECT 
+        SELECT
             table_catalog,
             table_schema,
             table_name,
@@ -51,7 +51,7 @@ INFO_SCHEMA_TEMPLATES = {
         {limit_clause}
     """,
     "partitions": """
-        SELECT 
+        SELECT
             table_catalog,
             table_schema,
             table_name,
@@ -66,7 +66,7 @@ INFO_SCHEMA_TEMPLATES = {
         {limit_clause}
     """,
     "views": """
-        SELECT 
+        SELECT
             table_catalog,
             table_schema,
             table_name,
@@ -78,7 +78,7 @@ INFO_SCHEMA_TEMPLATES = {
         {limit_clause}
     """,
     "routines": """
-        SELECT 
+        SELECT
             routine_catalog,
             routine_schema,
             routine_name,

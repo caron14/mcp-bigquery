@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from ..bigquery_client import get_bigquery_client
 from ..exceptions import MCPBigQueryError
@@ -15,8 +15,8 @@ logger = get_logger(__name__)
 
 
 async def list_datasets(
-    project_id: Optional[str] = None,
-    max_results: Optional[int] = None,
+    project_id: str | None = None,
+    max_results: int | None = None,
 ) -> dict[str, Any]:
     """List datasets along with core metadata."""
     try:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from google.cloud.exceptions import NotFound
 
@@ -27,9 +27,9 @@ logger = get_logger(__name__)
 
 async def list_tables(
     dataset_id: str,
-    project_id: Optional[str] = None,
-    max_results: Optional[int] = None,
-    table_type_filter: Optional[list[str]] = None,
+    project_id: str | None = None,
+    max_results: int | None = None,
+    table_type_filter: list[str] | None = None,
 ) -> dict[str, Any]:
     """List tables in a dataset."""
     try:
@@ -116,7 +116,7 @@ async def _list_tables_impl(request: ListTablesRequest) -> dict[str, Any]:
 async def get_table_info(
     table_id: str,
     dataset_id: str,
-    project_id: Optional[str] = None,
+    project_id: str | None = None,
 ) -> dict[str, Any]:
     """Return comprehensive metadata for a table."""
     try:

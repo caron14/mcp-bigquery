@@ -10,7 +10,7 @@ def test_imports_before_tests():
     """Verify critical imports work before running other tests."""
     try:
         import mcp.server.stdio  # noqa: F401
-        from google.auth.exceptions import DefaultCredentialsError  # noqa: F401; noqa: F401
+        from google.auth.exceptions import DefaultCredentialsError  # noqa: F401
         from google.cloud import bigquery  # noqa: F401
 
         from mcp_bigquery import __version__  # noqa: F401

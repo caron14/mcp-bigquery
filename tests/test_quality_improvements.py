@@ -1,7 +1,8 @@
 """Tests for code quality improvements."""
 
+import asyncio
 import time
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -344,7 +345,7 @@ class TestCache:
             assert client1 is client2
 
             # Different project creates new client
-            client3 = cache.get_client("project2", "US")
+            cache.get_client("project2", "US")
             assert mock_builder.called
 
 
@@ -444,7 +445,3 @@ class TestLogging:
 
         result = sync_func()
         assert result == "result"
-
-
-# Import asyncio for async tests
-import asyncio

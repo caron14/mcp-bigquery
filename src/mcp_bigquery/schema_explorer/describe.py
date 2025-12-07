@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from google.cloud.exceptions import NotFound
 
@@ -24,7 +24,7 @@ logger = get_logger(__name__)
 async def describe_table(
     table_id: str,
     dataset_id: str,
-    project_id: Optional[str] = None,
+    project_id: str | None = None,
     format_output: bool = False,
 ) -> dict[str, Any]:
     """Return schema metadata for a single table."""

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from google.cloud import bigquery
 from google.cloud.exceptions import BadRequest
@@ -21,10 +21,10 @@ logger = get_logger(__name__)
 async def query_info_schema(
     query_type: str,
     dataset_id: str,
-    project_id: Optional[str] = None,
-    table_filter: Optional[str] = None,
-    custom_query: Optional[str] = None,
-    limit: Optional[int] = 100,
+    project_id: str | None = None,
+    table_filter: str | None = None,
+    custom_query: str | None = None,
+    limit: int | None = 100,
 ) -> dict[str, Any]:
     """Execute INFORMATION_SCHEMA queries using dry-run validation."""
     try:

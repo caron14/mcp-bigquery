@@ -2,7 +2,6 @@
 
 import os
 from dataclasses import dataclass, field
-from typing import Optional
 
 from .exceptions import ConfigurationError
 
@@ -12,8 +11,8 @@ class Config:
     """Configuration for MCP BigQuery server."""
 
     # BigQuery settings
-    project_id: Optional[str] = field(default=None)
-    location: Optional[str] = field(default=None)
+    project_id: str | None = field(default=None)
+    location: str | None = field(default=None)
 
     # Pricing settings
     price_per_tib: float = field(default=5.0)
@@ -143,7 +142,7 @@ class Config:
 
 
 # Global configuration instance
-_config: Optional[Config] = None
+_config: Config | None = None
 
 
 def get_config() -> Config:

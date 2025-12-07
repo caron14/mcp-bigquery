@@ -62,10 +62,12 @@ class TestImports:
 
             # Test internal modules
             from mcp_bigquery.bigquery_client import get_bigquery_client
-            from mcp_bigquery.server import build_query_parameters  # noqa: F401
-            from mcp_bigquery.server import extract_error_location  # noqa: F401
-            from mcp_bigquery.server import handle_call_tool  # noqa: F401
-            from mcp_bigquery.server import handle_list_tools  # noqa: F401
+            from mcp_bigquery.server import (  # noqa: F401
+                build_query_parameters,
+                extract_error_location,
+                handle_call_tool,
+                handle_list_tools,
+            )
 
             assert get_bigquery_client is not None
             assert extract_error_location is not None
