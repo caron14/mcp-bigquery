@@ -19,13 +19,15 @@ def test_imports_before_tests():
 
 
 # Check if BigQuery credentials are available
-HAS_CREDENTIALS = (
-    os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") is not None
-    or os.path.exists(os.path.expanduser("~/.config/gcloud/application_default_credentials.json"))
-    or os.environ.get("GOOGLE_CLOUD_PROJECT") is not None
+RUN_BIGQUERY_TESTS = os.environ.get("RUN_BIGQUERY_TESTS") == "1"
+HAS_CREDENTIALS = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") is not None or os.path.exists(
+    os.path.expanduser("~/.config/gcloud/application_default_credentials.json")
 )
 
-pytestmark = pytest.mark.skipif(not HAS_CREDENTIALS, reason="BigQuery credentials not available")
+pytestmark = pytest.mark.skipif(
+    not (RUN_BIGQUERY_TESTS and HAS_CREDENTIALS),
+    reason="BigQuery credentials not available or RUN_BIGQUERY_TESTS!=1",
+)
 
 
 @pytest.mark.asyncio
