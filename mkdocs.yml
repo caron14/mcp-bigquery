@@ -86,6 +86,5 @@ nav:
   - Home: index.md
   - Installation: installation.md
   - Usage Guide: usage.md
-  - API Reference: api-reference.md
-  - Examples: examples.md
   - Development: development.md
+  - Module Map: module_map.md
