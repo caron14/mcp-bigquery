@@ -6,21 +6,91 @@ from typing import Any
 
 from google.cloud.exceptions import NotFound
 
-from ..bigquery_client import get_bigquery_client
+from ..clients import get_bigquery_client
 from ..exceptions import DatasetNotFoundError, MCPBigQueryError, TableNotFoundError
 from ..logging_config import get_logger
 from ..utils import format_error_response
 from ..validators import GetTableInfoRequest, ListTablesRequest, validate_request
-from ._formatters import (
-    clustering_fields,
-    external_table_info,
-    materialized_view_info,
-    partitioning_details,
-    partitioning_overview,
-    serialize_timestamp,
-    streaming_buffer_info,
-    table_statistics,
-)
+from .describe import partitioning_details, serialize_timestamp
+
+
+def partitioning_overview(table: Any) -> dict[str, Any] | None:
+    """Extract lightweight partitioning information for table listings."""
+    if not getattr(table, "partitioning_type", None):
+        return None
+
+    info: dict[str, Any] = {"type": table.partitioning_type}
+    time_partitioning = getattr(table, "time_partitioning", None)
+    if time_partitioning:
+        info["field"] = time_partitioning.field
+        info["expiration_ms"] = time_partitioning.expiration_ms
+
+    return info
+
+
+def clustering_fields(table: Any) -> list[str] | None:
+    """Return clustering fields if present."""
+    fields = getattr(table, "clustering_fields", None)
+    return list(fields) if fields else None
+
+
+def streaming_buffer_info(table: Any) -> dict[str, Any] | None:
+    """Return streaming buffer metadata when available."""
+    buffer = getattr(table, "streaming_buffer", None)
+    if not buffer:
+        return None
+
+    return {
+        "estimated_bytes": buffer.estimated_bytes,
+        "estimated_rows": buffer.estimated_rows,
+        "oldest_entry_time": serialize_timestamp(buffer.oldest_entry_time),
+    }
+
+
+def materialized_view_info(table: Any) -> dict[str, Any] | None:
+    """Return materialized view metadata when available."""
+    if getattr(table, "table_type", None) != "MATERIALIZED_VIEW":
+        return None
+
+    return {
+        "query": getattr(table, "mview_query", None),
+        "last_refresh_time": serialize_timestamp(getattr(table, "mview_last_refresh_time", None)),
+        "enable_refresh": getattr(table, "mview_enable_refresh", None),
+        "refresh_interval_minutes": getattr(table, "mview_refresh_interval_minutes", None),
+    }
+
+
+def external_table_info(table: Any) -> dict[str, Any] | None:
+    """Return external table configuration when available."""
+    if getattr(table, "table_type", None) != "EXTERNAL":
+        return None
+
+    config = getattr(table, "external_data_configuration", None)
+    if not config:
+        return None
+
+    return {
+        "source_uris": list(getattr(config, "source_uris", []) or []),
+        "source_format": getattr(config, "source_format", None),
+    }
+
+
+def table_statistics(table: Any) -> dict[str, Any]:
+    """Collect common table statistics into a dict."""
+    return {
+        "creation_time": serialize_timestamp(getattr(table, "created", None)),
+        "last_modified_time": serialize_timestamp(getattr(table, "modified", None)),
+        "num_bytes": getattr(table, "num_bytes", None),
+        "num_long_term_bytes": getattr(table, "num_long_term_bytes", None),
+        "num_rows": getattr(table, "num_rows", None),
+        "num_active_logical_bytes": getattr(table, "num_active_logical_bytes", None),
+        "num_active_physical_bytes": getattr(table, "num_active_physical_bytes", None),
+        "num_long_term_logical_bytes": getattr(table, "num_long_term_logical_bytes", None),
+        "num_long_term_physical_bytes": getattr(table, "num_long_term_physical_bytes", None),
+        "num_total_logical_bytes": getattr(table, "num_total_logical_bytes", None),
+        "num_total_physical_bytes": getattr(table, "num_total_physical_bytes", None),
+    }
+
 
 logger = get_logger(__name__)
 

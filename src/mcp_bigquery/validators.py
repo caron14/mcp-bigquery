@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 try:
-    from pydantic import BaseModel, Field, field_validator, model_validator
+    from pydantic import BaseModel, Field, field_validator
 except ImportError:
     # Fallback for when Pydantic is not installed
     class BaseModel:
@@ -25,77 +23,10 @@ except ImportError:
 
         return decorator
 
-    def model_validator(**kwargs):
-        def decorator(func):
-            return func
 
-        return decorator
-
-
-from .constants import DEFAULT_LIMITS, TableType
+from .constants import TableType
 
 PROJECT_ID_PATTERN = r"^(?:[a-z][a-z0-9-]{4,28}[a-z0-9]|[a-z0-9.-]+:[a-z][a-z0-9-]{4,28}[a-z0-9])$"
-
-
-class SQLValidationRequest(BaseModel):
-    """Request model for SQL validation."""
-
-    sql: str = Field(..., min_length=1, max_length=DEFAULT_LIMITS["max_query_length"])
-    params: dict[str, Any] | None = Field(None, max_length=DEFAULT_LIMITS["max_parameter_count"])
-
-    @field_validator("sql")
-    @classmethod
-    def validate_sql_not_empty(cls, v: str) -> str:
-        """Ensure SQL is not just whitespace."""
-        if not v.strip():
-            raise ValueError("SQL query cannot be empty or only whitespace")
-        return v
-
-    @field_validator("params")
-    @classmethod
-    def validate_param_names(cls, v: dict[str, Any] | None) -> dict[str, Any] | None:
-        """Validate parameter names are alphanumeric with underscores."""
-        if v is None:
-            return v
-
-        import re
-
-        for param_name in v.keys():
-            if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", param_name):
-                raise ValueError(f"Invalid parameter name: {param_name}")
-
-        return v
-
-
-class DryRunRequest(BaseModel):
-    """Request model for dry-run analysis."""
-
-    sql: str = Field(..., min_length=1, max_length=DEFAULT_LIMITS["max_query_length"])
-    params: dict[str, Any] | None = Field(None, max_length=DEFAULT_LIMITS["max_parameter_count"])
-    pricePerTiB: float | None = Field(None, gt=0, le=1000)
-
-    @field_validator("sql")
-    @classmethod
-    def validate_sql_not_empty(cls, v: str) -> str:
-        """Ensure SQL is not just whitespace."""
-        if not v.strip():
-            raise ValueError("SQL query cannot be empty or only whitespace")
-        return v
-
-
-class QueryAnalysisRequest(BaseModel):
-    """Request model for query analysis."""
-
-    sql: str = Field(..., min_length=1, max_length=DEFAULT_LIMITS["max_query_length"])
-    params: dict[str, Any] | None = Field(None, max_length=DEFAULT_LIMITS["max_parameter_count"])
-
-    @field_validator("sql")
-    @classmethod
-    def validate_sql_not_empty(cls, v: str) -> str:
-        """Ensure SQL is not just whitespace."""
-        if not v.strip():
-            raise ValueError("SQL query cannot be empty or only whitespace")
-        return v
 
 
 class ListDatasetsRequest(BaseModel):
@@ -143,45 +74,6 @@ class GetTableInfoRequest(BaseModel):
     table_id: str = Field(..., min_length=1, max_length=1024)
     dataset_id: str = Field(..., min_length=1, max_length=1024)
     project_id: str | None = Field(None, pattern=PROJECT_ID_PATTERN)
-
-
-class QueryInfoSchemaRequest(BaseModel):
-    """Request model for querying INFORMATION_SCHEMA."""
-
-    query_type: str = Field(
-        ..., pattern=r"^(tables|columns|table_storage|partitions|views|routines|custom)$"
-    )
-    dataset_id: str = Field(..., min_length=1, max_length=1024)
-    project_id: str | None = Field(None, pattern=PROJECT_ID_PATTERN)
-    table_filter: str | None = Field(None, max_length=1024)
-    custom_query: str | None = Field(None, max_length=DEFAULT_LIMITS["max_query_length"])
-    limit: int = Field(DEFAULT_LIMITS["info_schema_limit"], ge=1, le=10000)
-
-    @model_validator(mode="after")
-    def validate_custom_query(self) -> QueryInfoSchemaRequest:
-        """Validate custom_query is provided when query_type is 'custom'."""
-        if self.query_type == "custom" and not self.custom_query:
-            raise ValueError("custom_query is required when query_type is 'custom'")
-
-        if self.query_type != "custom" and self.custom_query:
-            raise ValueError("custom_query should only be provided when query_type is 'custom'")
-
-        return self
-
-
-class AnalyzePerformanceRequest(BaseModel):
-    """Request model for analyzing query performance."""
-
-    sql: str = Field(..., min_length=1, max_length=DEFAULT_LIMITS["max_query_length"])
-    project_id: str | None = Field(None, pattern=PROJECT_ID_PATTERN)
-
-    @field_validator("sql")
-    @classmethod
-    def validate_sql_not_empty(cls, v: str) -> str:
-        """Ensure SQL is not just whitespace."""
-        if not v.strip():
-            raise ValueError("SQL query cannot be empty or only whitespace")
-        return v
 
 
 def validate_request(request_class: type[BaseModel], data: dict) -> BaseModel:

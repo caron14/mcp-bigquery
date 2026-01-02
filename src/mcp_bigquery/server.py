@@ -4,7 +4,6 @@ import asyncio
 import json
 import logging
 import os
-import re
 from typing import Any
 
 import mcp.server.stdio
@@ -14,32 +13,159 @@ from google.cloud.exceptions import BadRequest
 from mcp.server import NotificationOptions, Server
 
 from . import __version__
-from .bigquery_client import get_bigquery_client
-from .info_schema import analyze_query_performance, query_info_schema
+from .clients import get_bigquery_client
 from .schema_explorer import describe_table, get_table_info, list_datasets, list_tables
 from .sql_analyzer import SQLAnalyzer
+from .utils import extract_error_location
 
 logger = logging.getLogger(__name__)
 
 server = Server("mcp-bigquery")
 
-
-def extract_error_location(error_message: str) -> dict[str, int] | None:
-    """
-    Extract line and column from BigQuery error message.
-
-    Looks for patterns like [3:15] in the error message.
-
-    Args:
-        error_message: The error message from BigQuery
-
-    Returns:
-        Dict with 'line' and 'column' if found, None otherwise
-    """
-    match = re.search(r"\[(\d+):(\d+)\]", error_message)
-    if match:
-        return {"line": int(match.group(1)), "column": int(match.group(2))}
-    return None
+TOOL_DEFS = [
+    (
+        "bq_validate_sql",
+        "Validate BigQuery SQL syntax without executing the query",
+        {
+            "type": "object",
+            "properties": {
+                "sql": {"type": "string", "description": "The SQL query to validate"},
+                "params": {
+                    "type": "object",
+                    "description": "Optional query parameters (key-value pairs)",
+                    "additionalProperties": True,
+                },
+            },
+            "required": ["sql"],
+        },
+    ),
+    (
+        "bq_dry_run_sql",
+        "Perform a dry-run of a BigQuery SQL query to get cost estimates and metadata",
+        {
+            "type": "object",
+            "properties": {
+                "sql": {"type": "string", "description": "The SQL query to dry-run"},
+                "params": {
+                    "type": "object",
+                    "description": "Optional query parameters (key-value pairs)",
+                    "additionalProperties": True,
+                },
+                "pricePerTiB": {
+                    "type": "number",
+                    "description": "Price per TiB for cost estimation (defaults to env var or 5.0)",
+                },
+            },
+            "required": ["sql"],
+        },
+    ),
+    (
+        "bq_extract_dependencies",
+        "Extract table and column dependencies from BigQuery SQL",
+        {
+            "type": "object",
+            "properties": {
+                "sql": {"type": "string", "description": "The SQL query to analyze"},
+                "params": {
+                    "type": "object",
+                    "description": "Optional query parameters (key-value pairs)",
+                    "additionalProperties": True,
+                },
+            },
+            "required": ["sql"],
+        },
+    ),
+    (
+        "bq_validate_query_syntax",
+        "Enhanced syntax validation with detailed error reporting",
+        {
+            "type": "object",
+            "properties": {
+                "sql": {"type": "string", "description": "The SQL query to validate"},
+                "params": {
+                    "type": "object",
+                    "description": "Optional query parameters (key-value pairs)",
+                    "additionalProperties": True,
+                },
+            },
+            "required": ["sql"],
+        },
+    ),
+    (
+        "bq_list_datasets",
+        "List all datasets in the BigQuery project",
+        {
+            "type": "object",
+            "properties": {
+                "project_id": {
+                    "type": "string",
+                    "description": "GCP project ID (uses default if not provided)",
+                },
+                "max_results": {
+                    "type": "integer",
+                    "description": "Maximum number of datasets to return",
+                },
+            },
+        },
+    ),
+    (
+        "bq_list_tables",
+        "List all tables in a BigQuery dataset with metadata",
+        {
+            "type": "object",
+            "properties": {
+                "dataset_id": {"type": "string", "description": "The dataset ID"},
+                "project_id": {
+                    "type": "string",
+                    "description": "GCP project ID (uses default if not provided)",
+                },
+                "max_results": {"type": "integer", "description": "Maximum number of tables"},
+                "table_type_filter": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Filter by table types (TABLE, VIEW, EXTERNAL, MATERIALIZED_VIEW)",
+                },
+            },
+            "required": ["dataset_id"],
+        },
+    ),
+    (
+        "bq_describe_table",
+        "Get table schema, metadata, and statistics",
+        {
+            "type": "object",
+            "properties": {
+                "table_id": {"type": "string", "description": "The table ID"},
+                "dataset_id": {"type": "string", "description": "The dataset ID"},
+                "project_id": {
+                    "type": "string",
+                    "description": "GCP project ID (uses default if not provided)",
+                },
+                "format_output": {
+                    "type": "boolean",
+                    "description": "Whether to format schema as table string",
+                },
+            },
+            "required": ["table_id", "dataset_id"],
+        },
+    ),
+    (
+        "bq_get_table_info",
+        "Get comprehensive table information including partitioning and clustering",
+        {
+            "type": "object",
+            "properties": {
+                "table_id": {"type": "string", "description": "The table ID"},
+                "dataset_id": {"type": "string", "description": "The dataset ID"},
+                "project_id": {
+                    "type": "string",
+                    "description": "GCP project ID (uses default if not provided)",
+                },
+            },
+            "required": ["table_id", "dataset_id"],
+        },
+    ),
+]
 
 
 def build_query_parameters(params: dict[str, Any] | None) -> list[bigquery.ScalarQueryParameter]:
@@ -67,255 +193,8 @@ async def handle_list_tools() -> list[types.Tool]:
     logger.debug("Listing available tools")
     """List available MCP tools."""
     return [
-        types.Tool(
-            name="bq_validate_sql",
-            description=("Validate BigQuery SQL syntax without executing the query"),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "sql": {
-                        "type": "string",
-                        "description": "The SQL query to validate",
-                    },
-                    "params": {
-                        "type": "object",
-                        "description": ("Optional query parameters (key-value pairs)"),
-                        "additionalProperties": True,
-                    },
-                },
-                "required": ["sql"],
-            },
-        ),
-        types.Tool(
-            name="bq_dry_run_sql",
-            description=(
-                "Perform a dry-run of a BigQuery SQL query to get cost " "estimates and metadata"
-            ),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "sql": {
-                        "type": "string",
-                        "description": "The SQL query to dry-run",
-                    },
-                    "params": {
-                        "type": "object",
-                        "description": ("Optional query parameters (key-value pairs)"),
-                        "additionalProperties": True,
-                    },
-                    "pricePerTiB": {
-                        "type": "number",
-                        "description": (
-                            "Price per TiB for cost estimation " "(defaults to env var or 5.0)"
-                        ),
-                    },
-                },
-                "required": ["sql"],
-            },
-        ),
-        types.Tool(
-            name="bq_analyze_query_structure",
-            description=("Analyze BigQuery SQL query structure and complexity"),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "sql": {
-                        "type": "string",
-                        "description": "The SQL query to analyze",
-                    },
-                    "params": {
-                        "type": "object",
-                        "description": ("Optional query parameters (key-value pairs)"),
-                        "additionalProperties": True,
-                    },
-                },
-                "required": ["sql"],
-            },
-        ),
-        types.Tool(
-            name="bq_extract_dependencies",
-            description=("Extract table and column dependencies from BigQuery SQL"),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "sql": {
-                        "type": "string",
-                        "description": "The SQL query to analyze",
-                    },
-                    "params": {
-                        "type": "object",
-                        "description": ("Optional query parameters (key-value pairs)"),
-                        "additionalProperties": True,
-                    },
-                },
-                "required": ["sql"],
-            },
-        ),
-        types.Tool(
-            name="bq_validate_query_syntax",
-            description=("Enhanced syntax validation with detailed error reporting"),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "sql": {
-                        "type": "string",
-                        "description": "The SQL query to validate",
-                    },
-                    "params": {
-                        "type": "object",
-                        "description": ("Optional query parameters (key-value pairs)"),
-                        "additionalProperties": True,
-                    },
-                },
-                "required": ["sql"],
-            },
-        ),
-        types.Tool(
-            name="bq_list_datasets",
-            description=("List all datasets in the BigQuery project"),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "project_id": {
-                        "type": "string",
-                        "description": "GCP project ID (uses default if not provided)",
-                    },
-                    "max_results": {
-                        "type": "integer",
-                        "description": "Maximum number of datasets to return",
-                    },
-                },
-            },
-        ),
-        types.Tool(
-            name="bq_list_tables",
-            description=("List all tables in a BigQuery dataset with metadata"),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "dataset_id": {
-                        "type": "string",
-                        "description": "The dataset ID",
-                    },
-                    "project_id": {
-                        "type": "string",
-                        "description": "GCP project ID (uses default if not provided)",
-                    },
-                    "max_results": {
-                        "type": "integer",
-                        "description": "Maximum number of tables to return",
-                    },
-                    "table_type_filter": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "Filter by table types (TABLE, VIEW, EXTERNAL, MATERIALIZED_VIEW)",
-                    },
-                },
-                "required": ["dataset_id"],
-            },
-        ),
-        types.Tool(
-            name="bq_describe_table",
-            description=("Get table schema, metadata, and statistics"),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "table_id": {
-                        "type": "string",
-                        "description": "The table ID",
-                    },
-                    "dataset_id": {
-                        "type": "string",
-                        "description": "The dataset ID",
-                    },
-                    "project_id": {
-                        "type": "string",
-                        "description": "GCP project ID (uses default if not provided)",
-                    },
-                    "format_output": {
-                        "type": "boolean",
-                        "description": "Whether to format schema as table string",
-                    },
-                },
-                "required": ["table_id", "dataset_id"],
-            },
-        ),
-        types.Tool(
-            name="bq_get_table_info",
-            description=(
-                "Get comprehensive table information including partitioning and clustering"
-            ),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "table_id": {
-                        "type": "string",
-                        "description": "The table ID",
-                    },
-                    "dataset_id": {
-                        "type": "string",
-                        "description": "The dataset ID",
-                    },
-                    "project_id": {
-                        "type": "string",
-                        "description": "GCP project ID (uses default if not provided)",
-                    },
-                },
-                "required": ["table_id", "dataset_id"],
-            },
-        ),
-        types.Tool(
-            name="bq_query_info_schema",
-            description=("Query INFORMATION_SCHEMA views for metadata"),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "query_type": {
-                        "type": "string",
-                        "description": "Type of query (tables, columns, table_storage, partitions, views, routines, custom)",
-                    },
-                    "dataset_id": {
-                        "type": "string",
-                        "description": "The dataset to query metadata for",
-                    },
-                    "project_id": {
-                        "type": "string",
-                        "description": "GCP project ID (uses default if not provided)",
-                    },
-                    "table_filter": {
-                        "type": "string",
-                        "description": "Optional table name filter",
-                    },
-                    "custom_query": {
-                        "type": "string",
-                        "description": "Custom INFORMATION_SCHEMA query (when query_type is 'custom')",
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Maximum number of results (default: 100)",
-                    },
-                },
-                "required": ["query_type", "dataset_id"],
-            },
-        ),
-        types.Tool(
-            name="bq_analyze_query_performance",
-            description=("Analyze query performance and provide optimization suggestions"),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "sql": {
-                        "type": "string",
-                        "description": "The SQL query to analyze",
-                    },
-                    "project_id": {
-                        "type": "string",
-                        "description": "GCP project ID (uses default if not provided)",
-                    },
-                },
-                "required": ["sql"],
-            },
-        ),
+        types.Tool(name=name, description=description, inputSchema=schema)
+        for name, description, schema in TOOL_DEFS
     ]
 
 
@@ -327,81 +206,47 @@ async def handle_call_tool(
     logger.info(f"Executing tool: {name}")
     logger.debug(f"Tool arguments: {arguments}")
 
-    if name == "bq_validate_sql":
-        result = await validate_sql(sql=arguments["sql"], params=arguments.get("params"))
-        return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
+    handlers = {
+        "bq_validate_sql": lambda args: validate_sql(sql=args["sql"], params=args.get("params")),
+        "bq_dry_run_sql": lambda args: dry_run_sql(
+            sql=args["sql"],
+            params=args.get("params"),
+            price_per_tib=args.get("pricePerTiB"),
+        ),
+        "bq_extract_dependencies": lambda args: extract_dependencies(
+            sql=args["sql"], params=args.get("params")
+        ),
+        "bq_validate_query_syntax": lambda args: validate_query_syntax(
+            sql=args["sql"], params=args.get("params")
+        ),
+        "bq_list_datasets": lambda args: list_datasets(
+            project_id=args.get("project_id"), max_results=args.get("max_results")
+        ),
+        "bq_list_tables": lambda args: list_tables(
+            dataset_id=args["dataset_id"],
+            project_id=args.get("project_id"),
+            max_results=args.get("max_results"),
+            table_type_filter=args.get("table_type_filter"),
+        ),
+        "bq_describe_table": lambda args: describe_table(
+            table_id=args["table_id"],
+            dataset_id=args["dataset_id"],
+            project_id=args.get("project_id"),
+            format_output=args.get("format_output", False),
+        ),
+        "bq_get_table_info": lambda args: get_table_info(
+            table_id=args["table_id"],
+            dataset_id=args["dataset_id"],
+            project_id=args.get("project_id"),
+        ),
+    }
 
-    elif name == "bq_dry_run_sql":
-        result = await dry_run_sql(
-            sql=arguments["sql"],
-            params=arguments.get("params"),
-            price_per_tib=arguments.get("pricePerTiB"),
-        )
-        return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
-
-    elif name == "bq_analyze_query_structure":
-        result = await analyze_query_structure(sql=arguments["sql"], params=arguments.get("params"))
-        return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
-
-    elif name == "bq_extract_dependencies":
-        result = await extract_dependencies(sql=arguments["sql"], params=arguments.get("params"))
-        return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
-
-    elif name == "bq_validate_query_syntax":
-        result = await validate_query_syntax(sql=arguments["sql"], params=arguments.get("params"))
-        return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
-
-    elif name == "bq_list_datasets":
-        result = await list_datasets(
-            project_id=arguments.get("project_id"), max_results=arguments.get("max_results")
-        )
-        return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
-
-    elif name == "bq_list_tables":
-        result = await list_tables(
-            dataset_id=arguments["dataset_id"],
-            project_id=arguments.get("project_id"),
-            max_results=arguments.get("max_results"),
-            table_type_filter=arguments.get("table_type_filter"),
-        )
-        return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
-
-    elif name == "bq_describe_table":
-        result = await describe_table(
-            table_id=arguments["table_id"],
-            dataset_id=arguments["dataset_id"],
-            project_id=arguments.get("project_id"),
-            format_output=arguments.get("format_output", False),
-        )
-        return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
-
-    elif name == "bq_get_table_info":
-        result = await get_table_info(
-            table_id=arguments["table_id"],
-            dataset_id=arguments["dataset_id"],
-            project_id=arguments.get("project_id"),
-        )
-        return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
-
-    elif name == "bq_query_info_schema":
-        result = await query_info_schema(
-            query_type=arguments["query_type"],
-            dataset_id=arguments["dataset_id"],
-            project_id=arguments.get("project_id"),
-            table_filter=arguments.get("table_filter"),
-            custom_query=arguments.get("custom_query"),
-            limit=arguments.get("limit", 100),
-        )
-        return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
-
-    elif name == "bq_analyze_query_performance":
-        result = await analyze_query_performance(
-            sql=arguments["sql"], project_id=arguments.get("project_id")
-        )
-        return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
-
-    else:
+    handler = handlers.get(name)
+    if not handler:
         raise ValueError(f"Unknown tool: {name}")
+
+    result = await handler(arguments)
+    return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
 
 
 async def validate_sql(sql: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -557,32 +402,6 @@ async def dry_run_sql(
             error_msg = f"Permission denied: {error_msg}. Please verify you have the necessary BigQuery permissions."
 
         return {"error": {"code": "UNKNOWN_ERROR", "message": error_msg}}
-
-
-async def analyze_query_structure(sql: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
-    """
-    Analyze BigQuery SQL query structure and complexity.
-
-    Args:
-        sql: The SQL query to analyze
-        params: Optional query parameters (not used in static analysis)
-
-    Returns:
-        Dict with structure analysis including query type, complexity score,
-        and feature detection
-    """
-    try:
-        analyzer = SQLAnalyzer(sql)
-        result = analyzer.analyze_structure()
-        return result
-
-    except Exception as e:
-        return {
-            "error": {
-                "code": "ANALYSIS_ERROR",
-                "message": f"Failed to analyze query structure: {str(e)}",
-            }
-        }
 
 
 async def extract_dependencies(sql: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
