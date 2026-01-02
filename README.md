@@ -35,7 +35,7 @@ graph LR
 
 - **🛡️ 100% Safe**: All operations are dry-run only (never executes queries)
 - **💰 Cost Transparency**: See costs before running any query
-- **🔍 Complete Analysis**: Analyze SQL structure, dependencies, and performance
+- **🔍 Complete Analysis**: Analyze dependencies and validate SQL syntax
 - **📊 Schema Explorer**: Browse datasets, tables, and columns with ease
 
 ### ⚡ Why use mcp-bigquery?
@@ -104,7 +104,6 @@ Restart Claude Desktop and try these questions:
 |------|---------|-------------|
 | **bq_validate_sql** | Check SQL syntax | Before running any query |
 | **bq_dry_run_sql** | Get cost estimates & metadata | 💰 To check costs |
-| **bq_analyze_query_structure** | Analyze query complexity | To improve performance |
 | **bq_extract_dependencies** | Extract table dependencies | To understand data lineage |
 | **bq_validate_query_syntax** | Detailed error analysis | To debug SQL errors |
 
@@ -116,13 +115,7 @@ Restart Claude Desktop and try these questions:
 | **bq_list_tables** | List tables with partitioning info | To browse a dataset |
 | **bq_describe_table** | Get detailed table schema | To understand columns |
 | **bq_get_table_info** | Complete table metadata | To get statistics |
-| **bq_query_info_schema** | Query INFORMATION_SCHEMA | For advanced metadata queries |
 
-### ⚡ Performance Optimization
-
-| Tool | Purpose | When to Use |
-|------|---------|-------------|
-| **bq_analyze_query_performance** | Analyze performance | To optimize queries |
 
 ## 💡 Real-World Examples
 
@@ -160,28 +153,7 @@ result = bq_describe_table(
 #     └── age (INTEGER)
 ```
 
-### Example 3: Get Optimization Suggestions
-
-```python
-# Analyze a slow query
-query = """
-SELECT * 
-FROM large_table 
-WHERE date > '2024-01-01'
-"""
-
-result = bq_analyze_query_performance(sql=query)
-
-# Output:
-# Performance Score: 45/100 (Needs Improvement)
-# 
-# Optimization Suggestions:
-# 1. Avoid SELECT * - specify only needed columns
-# 2. Use partition filter on date field
-# 3. Consider adding LIMIT clause
-```
-
-### Example 4: Track Data Dependencies
+### Example 3: Track Data Dependencies
 
 ```python
 # Understand query dependencies
@@ -229,7 +201,7 @@ Your Code ← → Claude/AI Assistant
 export BQ_PROJECT="my-project"        # GCP Project ID (required)
 export BQ_LOCATION="asia-northeast1"  # Region (optional)
 export SAFE_PRICE_PER_TIB="5.0"      # Price per TiB (default: $5)
-export DEBUG="true"                   # Enable debug logging
+export LOG_LEVEL="INFO"              # Optional log level override
 ```
 
 ### Full Claude Desktop Configuration
@@ -243,7 +215,7 @@ export DEBUG="true"                   # Enable debug logging
         "BQ_PROJECT": "my-production-project",
         "BQ_LOCATION": "asia-northeast1",
         "SAFE_PRICE_PER_TIB": "6.0",
-        "DEBUG": "false"
+        "LOG_LEVEL": "WARNING"
       }
     }
   }
@@ -287,7 +259,7 @@ If issues persist, enable debug mode:
 ```json
 {
   "env": {
-    "DEBUG": "true",
+    "LOG_LEVEL": "INFO",
     "BQ_PROJECT": "your-project"
   }
 }
@@ -296,19 +268,18 @@ If issues persist, enable debug mode:
 ## 📚 Learn More
 
 ### Getting Started
-- [Installation Guide](https://caron14.github.io/mcp-bigquery/getting-started/)
-- [Tool Documentation](https://caron14.github.io/mcp-bigquery/api/)
-- [Example Workflows](https://caron14.github.io/mcp-bigquery/examples/)
+- [Installation Guide](https://caron14.github.io/mcp-bigquery/installation/)
+- [Usage Guide](https://caron14.github.io/mcp-bigquery/usage/)
 
 ### For Developers
 - [Local Development](https://caron14.github.io/mcp-bigquery/development/)
-- [Running Tests](https://caron14.github.io/mcp-bigquery/testing/)
 - [Contributing Guide](CONTRIBUTING.md)
 
 ## 🚦 Project Status
 
 | Version | Release Date | Key Features |
 |---------|--------------|--------------|
+| v0.5.0 | 2025-02-10 | Simplified modules, reduced tests/docs, consolidated helpers |
 | v0.4.2 | 2025-12-08 | Modular schema explorer, unified client/logging controls |
 | v0.4.1 | 2025-01-22 | Better error handling, debug logging |
 | v0.4.0 | 2025-01-22 | Added 6 schema discovery tools |
