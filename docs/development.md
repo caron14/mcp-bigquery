@@ -73,7 +73,7 @@ mcp-bigquery/
 │   ├── server.py            # MCP server implementation
 │   ├── config.py            # Environment/config resolution
 │   ├── logging_config.py    # Central log formatting + level helpers
-│   ├── cache.py             # In-memory caches (clients + schema metadata)
+│   ├── cache.py             # Simple BigQuery client cache
 │   ├── clients/
 │   │   ├── __init__.py
 │   │   └── factory.py       # Shared BigQuery client creation
@@ -81,26 +81,15 @@ mcp-bigquery/
 │   │   ├── __init__.py
 │   │   ├── datasets.py      # Dataset listing flows
 │   │   ├── tables.py        # Table metadata aggregation
-│   │   ├── describe.py      # Schema inspection helpers
-│   │   └── _formatters.py   # Formatter helpers for schema/table views
-│   ├── info_schema/
-│   │   ├── __init__.py
-│   │   ├── queries.py       # INFORMATION_SCHEMA query builders
-│   │   ├── performance.py   # Performance analysis heuristics
-│   │   └── _templates.py    # SQL template catalog
-│   ├── sql_analyzer.py      # SQL analysis engine (v0.3.0)
+│   │   └── describe.py      # Schema inspection + shared formatters
+│   ├── sql_analyzer.py      # SQL analysis helpers
 │   ├── validators.py        # Input validation utilities
 │   ├── exceptions.py        # Custom exception types
 │   └── constants.py         # Shared constants/env defaults
 ├── tests/
 │   ├── conftest.py
-│   ├── test_features.py
-│   ├── test_quality_improvements.py
-│   ├── test_min.py
-│   ├── test_imports.py
-│   └── test_integration.py
+│   └── test_core.py
 ├── docs/
-├── examples/
 └── pyproject.toml
 ```
 
@@ -118,19 +107,14 @@ pytest tests/
 pytest --cov=mcp_bigquery tests/
 
 # Run specific test file
-pytest tests/test_min.py -v
+pytest tests/test_core.py -v
 ```
 
 ### Test Categories
 
 1. **Unit Tests** - No BigQuery credentials required
    ```bash
-   pytest tests/test_min.py::TestWithoutCredentials
-   ```
-
-2. **Integration Tests** - Requires BigQuery access
-   ```bash
-   pytest tests/test_integration.py
+   pytest tests/test_core.py
    ```
 
 ### Writing Tests
@@ -142,15 +126,8 @@ from mcp_bigquery.server import validate_sql
 
 @pytest.mark.asyncio
 async def test_validate_simple_query():
-    result = await validate_sql({"sql": "SELECT 1"})
+    result = await validate_sql("SELECT 1")
     assert result["isValid"] is True
-
-# Example integration test
-@pytest.mark.requires_credentials
-async def test_public_dataset_query():
-    sql = "SELECT * FROM `bigquery-public-data.samples.shakespeare`"
-    result = await dry_run_sql({"sql": sql})
-    assert result["totalBytesProcessed"] > 0
 ```
 
 ## Code Style
@@ -220,8 +197,7 @@ python -m mcp_bigquery
 
 Update relevant documentation:
 - Add new features to README.md
-- Update API documentation
-- Add examples if applicable
+- Update usage and development docs as needed
 
 ### 5. Submit Pull Request
 
@@ -280,10 +256,9 @@ mcp-bigquery --verbose          # INFO
 mcp-bigquery -vv                # DEBUG
 mcp-bigquery --quiet            # ERROR
 mcp-bigquery --json-logs        # Structured JSON logs
-mcp-bigquery --no-color         # Disable ANSI colors
 ```
 
-These switches stack with the `DEBUG=true` environment variable or the `config.log_level` default resolved in `mcp_bigquery.config`.
+These switches stack with the `LOG_LEVEL` environment variable or the `config.log_level` default resolved in `mcp_bigquery.config`.
 
 ### Programmatic Setup
 
@@ -293,7 +268,7 @@ from mcp_bigquery.config import get_config
 
 config = get_config()
 level = resolve_log_level(default_level=config.log_level, verbose=1, quiet=0)
-setup_logging(level=level, format_json=True, colored=False)
+setup_logging(level=level, format_json=True)
 ```
 
 ### Common Issues
@@ -322,7 +297,7 @@ setup_logging(level=level, format_json=True, colored=False)
 
 The server follows MCP protocol standards:
 
-1. **Tool Registration** - Eleven tools registered in `handle_list_tools()`
+1. **Tool Registration** - Eight tools registered in `handle_list_tools()`
 2. **Tool Execution** - Requests handled in `handle_call_tool()`
 3. **Error Handling** - Consistent error format across all tools
 4. **Async Support** - All operations are async for performance
@@ -330,29 +305,23 @@ The server follows MCP protocol standards:
 ### Core Modules
 
 #### Client Factory (`clients/factory.py`)
-- Single place for constructing cached BigQuery clients with retries and ADC handling.
-- Respects `BQ_PROJECT`, `BQ_LOCATION`, and `SAFE_PRICE_PER_TIB` via `config.get_config()`.
-- Legacy `mcp_bigquery.bigquery_client` remains as a thin façade that delegates to the factory.
+- Single place for constructing BigQuery clients with retry handling and ADC validation.
+- Respects `BQ_PROJECT` and `BQ_LOCATION` via `config.get_config()`.
+- Client creation is accessed through `mcp_bigquery.clients`, which exposes compatibility wrappers around the shared factory.
 
 #### Logging (`logging_config.py`)
 - Provides `setup_logging()` and `resolve_log_level()` used by the CLI and server during startup.
-- Routes logs to stderr by default, enables JSON/colored formatting toggles, and exposes decorators for measuring performance of dry-run helpers.
+- Routes logs to stderr by default, supports JSON formatting, and exposes a decorator for measuring performance of client creation.
 
-#### SQL Analyzer (`sql_analyzer.py`) - v0.3.0
-- SQLAnalyzer class for static SQL analysis
-- Uses sqlparse for AST parsing
-- Complexity scoring algorithm
-- BigQuery-specific syntax support
+#### SQL Analyzer (`sql_analyzer.py`)
+- SQLAnalyzer provides lightweight dependency extraction and syntax heuristics.
+- Designed for quick regex-based checks and dependency graphs.
 
 #### Schema Explorer Package (`schema_explorer/`) - updated v0.4.2
 - `datasets.py`, `tables.py`, and `describe.py` split responsibilities for dataset listing, table aggregation, and schema formatting.
-- `_formatters.py` centralizes shared serializers (timestamps, partitions, nested schema trees).
+- `describe.py` now owns shared serializers (timestamps, partitions, nested schema trees).
 - Modules rely on the client factory plus `validators`/`exceptions` and never import each other, preserving clean boundaries.
 
-#### Information Schema Package (`info_schema/`) - updated v0.4.2
-- `_templates.py` stores INFORMATION_SCHEMA SQL patterns.
-- `queries.py` handles templating, dry-runs, dependency extraction, and error normalization.
-- `performance.py` inspects query plans to emit heuristics and `optimization_suggestions`.
 
 ### Error Handling
 

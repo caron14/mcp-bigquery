@@ -1,6 +1,6 @@
 # Usage Guide
 
-This guide covers how to use MCP BigQuery's eleven tools for SQL validation, analysis, schema discovery, and performance optimization.
+This guide covers how to use MCP BigQuery's eight tools for SQL validation, dependency analysis, and schema discovery.
 
 ## SQL Validation
 
@@ -290,7 +290,7 @@ All errors follow this structure:
 2. **Column not found**
    - Check column name spelling
    - Verify table schema
-   - Use INFORMATION_SCHEMA to list columns
+   - Use `bq_describe_table` to list columns
 
 3. **Type mismatch**
    - Check data types in comparisons
@@ -355,30 +355,6 @@ Add SQL validation to your pipeline:
 ```
 
 ## SQL Analysis
-
-### Query Structure Analysis
-
-The `bq_analyze_query_structure` tool analyzes SQL complexity and patterns:
-
-```json
-{
-  "tool": "bq_analyze_query_structure",
-  "arguments": {
-    "sql": "WITH user_orders AS (SELECT user_id, COUNT(*) as cnt FROM orders GROUP BY user_id) SELECT * FROM user_orders WHERE cnt > 10"
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "query_type": "SELECT",
-  "has_cte": true,
-  "has_aggregations": true,
-  "complexity_score": 15,
-  "table_count": 1
-}
-```
 
 ### Dependency Extraction
 
@@ -465,63 +441,6 @@ Access all table metadata with `bq_get_table_info`:
 }
 ```
 
-## INFORMATION_SCHEMA Queries
-
-### Query Metadata Views
-
-Use `bq_query_info_schema` to safely query INFORMATION_SCHEMA:
-
-```json
-{
-  "tool": "bq_query_info_schema",
-  "arguments": {
-    "query_type": "columns",
-    "dataset_id": "analytics",
-    "table_filter": "users"
-  }
-}
-```
-
-Available query types:
-- `tables` - Table metadata
-- `columns` - Column information
-- `table_storage` - Storage statistics
-- `partitions` - Partition details
-- `views` - View definitions
-- `routines` - Stored procedures
-- `custom` - Custom INFORMATION_SCHEMA queries
-
-## Performance Analysis
-
-### Analyze Query Performance
-
-Get performance insights with `bq_analyze_query_performance`:
-
-```json
-{
-  "tool": "bq_analyze_query_performance",
-  "arguments": {
-    "sql": "SELECT * FROM large_table WHERE date > '2024-01-01'"
-  }
-}
-```
-
-**Response includes:**
-- Performance score (0-100)
-- Performance rating (EXCELLENT, GOOD, FAIR, NEEDS_OPTIMIZATION)
-- Optimization suggestions with severity levels
-- Cost estimates and data scan volume
-
-### Optimization Recommendations
-
-Common optimization suggestions:
-1. **SELECT_STAR** - Replace with specific columns
-2. **HIGH_DATA_SCAN** - Add WHERE clauses or use partitions
-3. **LIMIT_WITHOUT_ORDER** - Add ORDER BY for consistency
-4. **CROSS_JOIN** - Verify necessity, use INNER JOIN if possible
-5. **SUBQUERY_IN_WHERE** - Consider JOIN or WITH clause
-6. **MANY_TABLES** - Create intermediate tables or views
-
 ## Advanced Features
 
 ### Working with Nested Fields
@@ -569,10 +488,7 @@ Response includes partitioning details:
 3. **Avoid SELECT *** - Specify only needed columns
 4. **Use APPROX functions** - For large aggregations when exact values aren't required
 5. **Materialized Views** - Pre-compute expensive aggregations
-6. **Query Cache** - Note: Disabled in dry-run for accurate estimates
 
 ## Next Steps
 
-- See [API Reference](api-reference.md) for complete tool documentation
-- Check [Examples](examples.md) for real-world use cases
 - Read [Development Guide](development.md) for contributing

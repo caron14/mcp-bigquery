@@ -50,10 +50,9 @@ mcp-bigquery --log-level=INFO   # Explicit override
 
 # Structured output
 mcp-bigquery --json-logs        # Emit JSON lines
-mcp-bigquery --no-color         # Disable ANSI colors
 ```
 
-Combine these flags with `DEBUG=true` in your environment when diagnosing CLI integrations.
+Combine these flags with `LOG_LEVEL=DEBUG` in your environment when diagnosing CLI integrations.
 
 ## Authentication
 
@@ -259,5 +258,4 @@ gcloud services enable bigquery.googleapis.com --project=YOUR_PROJECT
 ## Next Steps
 
 - Learn about [SQL Validation and Analysis](usage.md)
-- See [API Reference](api-reference.md) for detailed tool documentation
-- Check out [Examples](examples.md) for real-world use cases
+- See [Usage Guide](usage.md) for tool documentation and workflows
