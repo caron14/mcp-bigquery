@@ -1,6 +1,6 @@
 [project]
 name = "mcp-bigquery"
-version = "0.4.2"
+version = "0.5.0"
 description = "Minimal MCP server for BigQuery SQL validation and dry-run analysis"
 readme = "README.md"
 license = {text = "MIT"}
@@ -26,7 +26,6 @@ requires-python = ">=3.10"
 dependencies = [
     "mcp>=1.0.0",
     "google-cloud-bigquery>=3.0.0",
-    "sqlparse>=0.4.0",
     "tabulate>=0.9.0",
     "pydantic>=2.0.0",
 ]
@@ -50,6 +49,10 @@ dev = [
     "black>=23.0.0",
     "ruff>=0.1.0",
     "mypy>=1.5.0",
+]
+docs = [
+    "mkdocs-material[imaging]>=9.0.0",
+    "mkdocs-minify-plugin>=0.8.0",
 ]
 
 [build-system]

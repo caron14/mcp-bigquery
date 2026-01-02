@@ -40,11 +40,6 @@ def main():
         action="store_true",
         help="Emit logs as JSON (useful for structured log ingestion)",
     )
-    parser.add_argument(
-        "--no-color",
-        action="store_true",
-        help="Disable ANSI colors in console logs",
-    )
 
     args = parser.parse_args()
 
@@ -56,11 +51,7 @@ def main():
         quiet=args.quiet,
     )
 
-    setup_logging(
-        level=level,
-        format_json=args.json_logs,
-        colored=not args.no_color,
-    )
+    setup_logging(level=level, format_json=args.json_logs)
 
     # Run the server
     try:

@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..bigquery_client import get_bigquery_client
+from ..clients import get_bigquery_client
 from ..exceptions import MCPBigQueryError
 from ..logging_config import get_logger
 from ..utils import format_error_response
 from ..validators import ListDatasetsRequest, validate_request
-from ._formatters import serialize_timestamp
+from .describe import serialize_timestamp
 
 logger = get_logger(__name__)
 

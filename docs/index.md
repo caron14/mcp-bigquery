@@ -15,12 +15,12 @@
 
 ## Overview
 
-The `mcp-bigquery` package provides a comprehensive MCP server for BigQuery SQL validation, dry-run analysis, query structure analysis, and schema discovery. This server provides eleven tools for validating, analyzing, understanding BigQuery SQL queries, and exploring BigQuery schemas without executing queries.
+The `mcp-bigquery` package provides a comprehensive MCP server for BigQuery SQL validation, dry-run analysis, dependency analysis, and schema discovery. This server provides eight tools for validating, analyzing, and exploring BigQuery schemas without executing queries.
 
-!!! info "What's new in v0.4.2"
-    - Schema explorer and INFORMATION_SCHEMA logic now live in dedicated subpackages with shared formatters.
-    - BigQuery client creation is centralized in `mcp_bigquery.clients` so every tool inherits the same retries, caching, and dry-run safeguards.
-    - Logging defaults to `WARNING` on stderr with `--verbose/--quiet`/`--json-logs` CLI switches for fine-grained control. See [Development](development.md#logging-and-debugging) for details.
+!!! info "What's new in v0.5.0"
+    - Schema explorer formatters are consolidated into `describe.py` and `tables.py`.
+    - BigQuery client access is centralized in `mcp_bigquery.clients` with a minimal client cache.
+    - Logging defaults to `WARNING` on stderr with `--verbose/--quiet` and `--json-logs` switches for control. See [Development](development.md#logging-and-debugging) for details.
     - Need a quick tour of the new layout? Read the [Module Responsibility Map](module_map.md).
 
 !!! warning "Important"
@@ -31,7 +31,6 @@ The `mcp-bigquery` package provides a comprehensive MCP server for BigQuery SQL 
 ### 🔍 SQL Analysis & Validation
 - **SQL Validation**: Check BigQuery SQL syntax without running queries
 - **Dry-Run Analysis**: Get cost estimates, referenced tables, and schema preview
-- **Query Structure Analysis**: Analyze SQL complexity, JOINs, CTEs, and query patterns
 - **Dependency Extraction**: Extract table and column dependencies from queries
 - **Enhanced Syntax Validation**: Detailed error reporting with suggestions
 [→ SQL Analysis Guide](usage.md#sql-analysis)
@@ -40,21 +39,14 @@ The `mcp-bigquery` package provides a comprehensive MCP server for BigQuery SQL 
 - **Dataset Explorer**: List and explore datasets in your BigQuery project
 - **Table Browser**: Browse tables with metadata, partitioning, and clustering info via dedicated formatters
 - **Schema Inspector**: Get detailed table schemas with nested field support
-- **INFORMATION_SCHEMA Access**: Safe querying of BigQuery metadata views
 - **Comprehensive Table Info**: Access all table metadata including encryption and time travel using the new modular helpers
 [→ Schema Discovery Guide](usage.md#schema-discovery)
-
-### 🚀 Performance Analysis
-- **Query Performance Scoring**: Analyze query performance without execution
-- **Optimization Suggestions**: Get actionable recommendations for query improvements
-- **Cost-Benefit Analysis**: Compare costs before and after optimizations
-[→ Performance Guide](usage.md#performance-analysis)
 
 ### 🏷️ Additional Features
 - **Parameter Support**: Validate parameterized queries
 - **Safe Operations**: All operations are dry-run only, no query execution
 - **BigQuery-Specific**: Support for ARRAY, STRUCT, and other BigQuery features
-- **Structured Logging**: CLI exposes `--verbose/--quiet`, `--json-logs`, and `--no-color` flags governed by `logging_config`
+- **Structured Logging**: CLI exposes `--verbose/--quiet` and `--json-logs` flags governed by `logging_config`
 [→ Advanced Features](usage.md#advanced-features)
 
 ## Quick Example
@@ -132,13 +124,13 @@ The `mcp-bigquery` package provides a comprehensive MCP server for BigQuery SQL 
     }
     ```
 
-=== "Performance Analysis"
+=== "Dependency Analysis"
 
     ```json
     {
-      "tool": "bq_analyze_query_performance",
+      "tool": "bq_extract_dependencies",
       "arguments": {
-        "sql": "SELECT * FROM large_table WHERE date > '2024-01-01'"
+        "sql": "SELECT u.name, o.total FROM users u JOIN orders o ON u.id = o.user_id"
       }
     }
     ```
@@ -146,15 +138,15 @@ The `mcp-bigquery` package provides a comprehensive MCP server for BigQuery SQL 
     **Response:**
     ```json
     {
-      "performance_score": 65,
-      "performance_rating": "GOOD",
-      "optimization_suggestions": [
+      "tables": [
         {
-          "type": "SELECT_STAR",
-          "severity": "MEDIUM",
-          "recommendation": "Select only needed columns"
+          "full_name": "users"
+        },
+        {
+          "full_name": "orders"
         }
-      ]
+      ],
+      "columns": ["name", "total", "id", "user_id"]
     }
     ```
 
@@ -194,7 +186,6 @@ uv pip install mcp-bigquery
 
 - Identify expensive queries before execution
 - Compare cost estimates for different approaches
-- Monitor query complexity trends
 - Optimize data access patterns
 
 ## Documentation
@@ -204,12 +195,6 @@ Setup, authentication, and configuration
 
 ### 📖 [Usage Guide](usage.md)
 SQL validation, dry-run analysis, and best practices
-
-### 📋 [API Reference](api-reference.md)
-Complete tool documentation and schemas
-
-### 💻 [Examples](examples.md)
-Real-world queries and patterns
 
 ## Support
 
