@@ -975,7 +975,7 @@ wheels = [
 
 [[package]]
 name = "mcp-bigquery"
-version = "0.4.2"
+version = "0.5.0"
 source = { editable = "." }
 dependencies = [
     { name = "google-cloud-bigquery" },
