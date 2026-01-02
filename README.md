@@ -279,7 +279,7 @@ If issues persist, enable debug mode:
 
 | Version | Release Date | Key Features |
 |---------|--------------|--------------|
-| v0.5.0 | 2025-02-10 | Simplified modules, reduced tests/docs, consolidated helpers |
+| v0.5.0 | 2026-01-02 | Consolidated formatters, client cache, logging controls |
 | v0.4.2 | 2025-12-08 | Modular schema explorer, unified client/logging controls |
 | v0.4.1 | 2025-01-22 | Better error handling, debug logging |
 | v0.4.0 | 2025-01-22 | Added 6 schema discovery tools |
