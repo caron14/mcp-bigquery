@@ -386,7 +386,7 @@ class TestPreviewTable:
 
             result = await preview_table("test_dataset", "test_table")
             assert "message" in result
-            assert result["message"] == "テーブルは空です"
+            assert result["message"] == "Table is empty."
 
             reset_config()
 

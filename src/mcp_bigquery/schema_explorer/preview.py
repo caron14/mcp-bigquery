@@ -70,7 +70,7 @@ async def preview_table(
         config = get_config()
         if not config.enable_preview:
             raise MCPBigQueryError(
-                "環境変数 MCP_BQ_ENABLE_PREVIEW=true を設定してください",
+                "Environment variable MCP_BQ_ENABLE_PREVIEW=true must be set to enable this tool.",
                 code="PREVIEW_DISABLED",
             )
 
@@ -106,7 +106,7 @@ async def _preview_table_impl(request: PreviewTableRequest) -> dict[str, Any]:
             "dataset_id": request.dataset_id,
             "table_id": request.table_id,
             "project": project,
-            "message": "テーブルは空です",
+            "message": "Table is empty.",
         }
 
     serialized_rows = [serialize_value(row) for row in rows]
