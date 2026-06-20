@@ -17,11 +17,11 @@
 
 The `mcp-bigquery` package provides a comprehensive MCP server for BigQuery SQL validation, dry-run analysis, dependency analysis, and schema discovery. This server provides eight tools for validating, analyzing, and exploring BigQuery schemas without executing queries.
 
-!!! info "What's new in v0.5.0"
-    - Schema explorer formatters are consolidated into `describe.py` and `tables.py`.
-    - BigQuery client access is centralized in `mcp_bigquery.clients` with a minimal client cache.
-    - Logging defaults to `WARNING` on stderr with `--verbose/--quiet` and `--json-logs` switches for control. See [Development](development.md#logging-and-debugging) for details.
-    - Need a quick tour of the new layout? Read the [Module Responsibility Map](module_map.md).
+!!! info "What's new in v0.6.0"
+    - Enhanced query analysis: recursive parsing of query AST token structures with CTE (Common Table Expression) filtering and refined column-level dependency resolution.
+    - Robust, thread-safe BigQuery client cache implementing locking mechanisms (`BigQueryClientCache`).
+    - Exponential backoff retry strategy for client validation against transient BigQuery errors.
+    - Refined, declarative Google API error handling mapping with a new `PermissionError` class and improved error location regex patterns.
 
 !!! warning "Important"
     This server does **NOT** execute queries. All operations are dry-run only. Cost estimates are approximations based on bytes processed.
