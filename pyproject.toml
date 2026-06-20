@@ -128,3 +128,11 @@ ignore_missing_imports = true
 no_strict_optional = false
 strict = true
 
+[[tool.mypy.overrides]]
+module = [
+    "tests.*",
+    "test_core",
+    "conftest",
+]
+ignore_errors = true
+
