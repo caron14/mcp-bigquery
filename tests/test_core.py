@@ -5,7 +5,13 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 
 from mcp_bigquery.logging_config import resolve_log_level, setup_logging
-from mcp_bigquery.schema_explorer import describe_table, get_table_info, list_datasets, list_tables
+from mcp_bigquery.schema_explorer import (
+    describe_table,
+    get_table_info,
+    list_datasets,
+    list_tables,
+    preview_table,
+)
 from mcp_bigquery.server import build_query_parameters, handle_list_tools
 from mcp_bigquery.sql_analyzer import SQLAnalyzer
 from mcp_bigquery.utils import extract_error_location
@@ -26,11 +32,12 @@ class TestBasics:
     async def test_list_tools(self):
         tools = await handle_list_tools()
         tool_names = {tool.name for tool in tools}
-        assert len(tool_names) == 8
+        assert len(tool_names) == 9
         assert "bq_validate_sql" in tool_names
         assert "bq_dry_run_sql" in tool_names
         assert "bq_extract_dependencies" in tool_names
         assert "bq_validate_query_syntax" in tool_names
+        assert "bq_preview_table" in tool_names
 
 
 class TestSQLAnalyzer:
@@ -291,3 +298,114 @@ class TestConcurrencyAndCache:
             assert r is first_result
 
         assert create_count == 1
+
+
+class TestPreviewTable:
+    @pytest.mark.asyncio
+    async def test_preview_disabled_by_default(self):
+        from mcp_bigquery.config import reset_config
+
+        reset_config()
+
+        result = await preview_table("test_dataset", "test_table")
+        assert "error" in result
+        assert result["error"]["code"] == "PREVIEW_DISABLED"
+        assert "MCP_BQ_ENABLE_PREVIEW=true" in result["error"]["message"]
+
+    @pytest.mark.asyncio
+    async def test_preview_enabled_successful(self):
+        from mcp_bigquery.config import Config, reset_config, set_config
+
+        set_config(Config(project_id="test-project", enable_preview=True))
+
+        with patch("mcp_bigquery.schema_explorer.preview.get_bigquery_client") as mock_get_client:
+            mock_client = MagicMock()
+            mock_get_client.return_value = mock_client
+            mock_client.project = "test-project"
+
+            import datetime
+            from decimal import Decimal
+
+            mock_row = MagicMock()
+            mock_row.items.return_value = [
+                ("id", 1),
+                ("name", "Alice"),
+                ("created_at", datetime.datetime(2024, 1, 1, 12, 0, 0)),
+                ("price", Decimal("9.99")),
+                ("data", b"hello"),
+            ]
+            mock_client.list_rows.return_value = [mock_row]
+
+            result = await preview_table("test_dataset", "test_table", max_results=3)
+
+            assert "rows" in result
+            assert len(result["rows"]) == 1
+            row = result["rows"][0]
+            assert row["id"] == 1
+            assert row["name"] == "Alice"
+            assert row["created_at"] == "2024-01-01T12:00:00"
+            assert row["price"] == 9.99
+            assert row["data"] == "hello"
+
+            mock_client.list_rows.assert_called_once()
+            args, kwargs = mock_client.list_rows.call_args
+            assert kwargs["max_results"] == 3
+
+            reset_config()
+
+    @pytest.mark.asyncio
+    async def test_preview_max_results_clipping(self):
+        from mcp_bigquery.config import Config, reset_config, set_config
+
+        set_config(Config(project_id="test-project", enable_preview=True))
+
+        with patch("mcp_bigquery.schema_explorer.preview.get_bigquery_client") as mock_get_client:
+            mock_client = MagicMock()
+            mock_get_client.return_value = mock_client
+            mock_client.project = "test-project"
+            mock_client.list_rows.return_value = []
+
+            await preview_table("test_dataset", "test_table", max_results=15)
+
+            args, kwargs = mock_client.list_rows.call_args
+            assert kwargs["max_results"] == 10
+
+            reset_config()
+
+    @pytest.mark.asyncio
+    async def test_preview_empty_table(self):
+        from mcp_bigquery.config import Config, reset_config, set_config
+
+        set_config(Config(project_id="test-project", enable_preview=True))
+
+        with patch("mcp_bigquery.schema_explorer.preview.get_bigquery_client") as mock_get_client:
+            mock_client = MagicMock()
+            mock_get_client.return_value = mock_client
+            mock_client.project = "test-project"
+            mock_client.list_rows.return_value = []
+
+            result = await preview_table("test_dataset", "test_table")
+            assert "message" in result
+            assert result["message"] == "Table is empty."
+
+            reset_config()
+
+    @pytest.mark.asyncio
+    async def test_preview_not_found_handling(self):
+        from google.cloud.exceptions import NotFound
+
+        from mcp_bigquery.config import Config, reset_config, set_config
+
+        set_config(Config(project_id="test-project", enable_preview=True))
+
+        with patch("mcp_bigquery.schema_explorer.preview.get_bigquery_client") as mock_get_client:
+            mock_client = MagicMock()
+            mock_get_client.return_value = mock_client
+            mock_client.project = "test-project"
+            mock_client.list_rows.side_effect = NotFound("Table not found")
+
+            result = await preview_table("test_dataset", "not_exist_table")
+            assert "error" in result
+            assert result["error"]["code"] == "TABLE_NOT_FOUND"
+
+            reset_config()

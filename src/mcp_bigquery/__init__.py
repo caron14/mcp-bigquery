@@ -1,10 +1,16 @@
 """MCP BigQuery Server - MCP server for BigQuery SQL validation and dry-run."""
 
-__version__ = "0.5.0"
+__version__ = "0.7.0"
 __author__ = "caron14"
 __email__ = "caron14@users.noreply.github.com"
 
-from .schema_explorer import describe_table, get_table_info, list_datasets, list_tables
+from .schema_explorer import (
+    describe_table,
+    get_table_info,
+    list_datasets,
+    list_tables,
+    preview_table,
+)
 from .server import dry_run_sql, extract_dependencies, server, validate_query_syntax, validate_sql
 
 __all__ = [
@@ -17,5 +23,6 @@ __all__ = [
     "list_tables",
     "describe_table",
     "get_table_info",
+    "preview_table",
     "__version__",
 ]

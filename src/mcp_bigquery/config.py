@@ -14,6 +14,7 @@ class Config:
     project_id: str | None = field(default=None)
     location: str | None = field(default=None)
     log_level: str = field(default="WARNING")
+    enable_preview: bool = field(default=False)
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -22,6 +23,7 @@ class Config:
             project_id=os.getenv("BQ_PROJECT"),
             location=os.getenv("BQ_LOCATION"),
             log_level=os.getenv("LOG_LEVEL", "WARNING"),
+            enable_preview=os.getenv("MCP_BQ_ENABLE_PREVIEW", "false").lower() == "true",
         )
 
     def validate(self) -> None:
@@ -35,6 +37,7 @@ class Config:
             "project_id": self.project_id,
             "location": self.location,
             "log_level": self.log_level,
+            "enable_preview": self.enable_preview,
         }
 
 

@@ -66,6 +66,15 @@ class GetTableInfoRequest(BaseModel):
     project_id: ProjectId | None = Field(None)
 
 
+class PreviewTableRequest(BaseModel):
+    """Request model for previewing table data."""
+
+    dataset_id: DatasetId
+    table_id: TableId
+    project_id: ProjectId | None = Field(None)
+    max_results: int = Field(5, ge=1)
+
+
 def validate_request(request_class: type[T], data: dict[str, Any]) -> T:
     """
     Validate request data using a Pydantic model.
