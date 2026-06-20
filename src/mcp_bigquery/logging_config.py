@@ -3,8 +3,9 @@
 import json
 import logging
 import sys
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, TextIO
+from typing import Any, TextIO, TypeVar, cast
 
 
 class JSONFormatter(logging.Formatter):
@@ -84,13 +85,16 @@ def get_logger(name: str) -> logging.Logger:
     return logging.getLogger(name)
 
 
-def log_performance(logger: logging.Logger, operation: str) -> Any:
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def log_performance(logger: logging.Logger, operation: str) -> Callable[[F], F]:
     """Decorator to log performance metrics for a function."""
     import asyncio
     import functools
     import time
 
-    def decorator(func: Any) -> Any:
+    def decorator(func: F) -> F:
         @functools.wraps(func)
         async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             start_time = time.time()
@@ -113,6 +117,6 @@ def log_performance(logger: logging.Logger, operation: str) -> Any:
                 logger.error("%s failed in %.3fs", operation, time.time() - start_time)
                 raise
 
-        return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
+        return cast(F, async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper)
 
     return decorator

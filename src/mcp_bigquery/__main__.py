@@ -10,7 +10,7 @@ from .logging_config import resolve_log_level, setup_logging
 from .server import main as server_main
 
 
-def main():
+def main() -> None:
     """Console script entry point."""
     parser = argparse.ArgumentParser(
         description="MCP BigQuery Server - Validate and analyze BigQuery SQL"
