@@ -115,6 +115,10 @@ Restart Claude Desktop and try these questions:
 | **bq_list_tables** | List tables with partitioning info | To browse a dataset |
 | **bq_describe_table** | Get detailed table schema | To understand columns |
 | **bq_get_table_info** | Complete table metadata | To get statistics |
+| **bq_preview_table** | Preview table data (cost-free) | To view sample records without scan costs |
+
+> [!IMPORTANT]
+> **bq_preview_table** uses `client.list_rows` (API: `tabledata.list`) to retrieve sample rows directly without running a query job, keeping it **cost-free (0 bytes billed)**. To prevent accidental data exposure of sensitive information (PII) to the LLM, this tool is **disabled by default**. You must explicitly opt-in by setting `MCP_BQ_ENABLE_PREVIEW=true` in your environment.
 
 
 ## 💡 Real-World Examples
@@ -202,6 +206,7 @@ export BQ_PROJECT="my-project"        # GCP Project ID (required)
 export BQ_LOCATION="asia-northeast1"  # Region (optional)
 export SAFE_PRICE_PER_TIB="5.0"      # Price per TiB (default: $5)
 export LOG_LEVEL="INFO"              # Optional log level override
+export MCP_BQ_ENABLE_PREVIEW="true"  # Opt-in to enable bq_preview_table (default: false)
 ```
 
 ### Full Claude Desktop Configuration
@@ -215,7 +220,8 @@ export LOG_LEVEL="INFO"              # Optional log level override
         "BQ_PROJECT": "my-production-project",
         "BQ_LOCATION": "asia-northeast1",
         "SAFE_PRICE_PER_TIB": "6.0",
-        "LOG_LEVEL": "WARNING"
+        "LOG_LEVEL": "WARNING",
+        "MCP_BQ_ENABLE_PREVIEW": "true"
       }
     }
   }

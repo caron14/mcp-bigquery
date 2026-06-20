@@ -14,7 +14,13 @@ from mcp.server import NotificationOptions, Server
 
 from . import __version__
 from .clients import get_bigquery_client
-from .schema_explorer import describe_table, get_table_info, list_datasets, list_tables
+from .schema_explorer import (
+    describe_table,
+    get_table_info,
+    list_datasets,
+    list_tables,
+    preview_table,
+)
 from .sql_analyzer import SQLAnalyzer
 from .utils import extract_error_location
 
@@ -165,6 +171,26 @@ TOOL_DEFS = [
             "required": ["table_id", "dataset_id"],
         },
     ),
+    (
+        "bq_preview_table",
+        "Get a preview of table data without running a query job (cost-free)",
+        {
+            "type": "object",
+            "properties": {
+                "dataset_id": {"type": "string", "description": "The dataset ID"},
+                "table_id": {"type": "string", "description": "The table ID"},
+                "project_id": {
+                    "type": "string",
+                    "description": "GCP project ID (uses default if not provided)",
+                },
+                "max_results": {
+                    "type": "integer",
+                    "description": "Maximum number of rows to preview (default: 5, hard limit: 10)",
+                },
+            },
+            "required": ["dataset_id", "table_id"],
+        },
+    ),
 ]
 
 
@@ -238,6 +264,12 @@ async def handle_call_tool(
             table_id=args["table_id"],
             dataset_id=args["dataset_id"],
             project_id=args.get("project_id"),
+        ),
+        "bq_preview_table": lambda args: preview_table(
+            dataset_id=args["dataset_id"],
+            table_id=args["table_id"],
+            project_id=args.get("project_id"),
+            max_results=args.get("max_results", 5),
         ),
     }
 
