@@ -285,6 +285,8 @@ If issues persist, enable debug mode:
 
 | Version | Release Date | Key Features |
 |---------|--------------|--------------|
+| v0.7.0 | 2026-06-21 | Cost-free table preview tool (`bq_preview_table`) and security opt-in |
+| v0.6.0 | 2026-06-21 | Thread-safe caching, recursive AST queries, backoff retries, mapping exceptions |
 | v0.5.0 | 2026-01-02 | Consolidated formatters, client cache, logging controls |
 | v0.4.2 | 2025-12-08 | Modular schema explorer, unified client/logging controls |
 | v0.4.1 | 2025-01-22 | Better error handling, debug logging |
