@@ -205,3 +205,89 @@ class TestSupportModules:
             client2 = cache.get_client("project1", "US")
             assert client1 is client2
             assert not mock_builder.called
+
+
+class TestEnhancedValidationAndExceptions:
+    def test_create_mock_bad_request_with_errors(self):
+        from google.api_core.exceptions import BadRequest
+
+        from mcp_bigquery.exceptions import SQLValidationError, handle_bigquery_error
+
+        errors = [{"message": "Duplicate column name 'id'", "location": "query"}]
+        exc = BadRequest("Bad Request", errors=errors)
+        exc._errors = errors
+
+        bq_err = handle_bigquery_error(exc)
+        assert isinstance(bq_err, SQLValidationError)
+        assert bq_err.details == errors
+
+    def test_validation_boundary_conditions(self):
+        from mcp_bigquery.exceptions import InvalidParameterError
+        from mcp_bigquery.validators import (
+            DescribeTableRequest,
+            GetTableInfoRequest,
+            ListDatasetsRequest,
+            ListTablesRequest,
+            validate_request,
+        )
+
+        # 1. project_id boundary validation (too short or invalid chars)
+        with pytest.raises(InvalidParameterError) as exc_info:
+            validate_request(ListDatasetsRequest, {"project_id": "abc"})
+        assert "project_id" in str(exc_info.value)
+
+        with pytest.raises(InvalidParameterError) as exc_info:
+            validate_request(ListDatasetsRequest, {"project_id": "Invalid_Proj"})
+        assert "project_id" in str(exc_info.value)
+
+        # 2. dataset_id / table_id boundary validation (empty or too long)
+        with pytest.raises(InvalidParameterError) as exc_info:
+            validate_request(ListTablesRequest, {"dataset_id": ""})
+        assert "dataset_id" in str(exc_info.value)
+
+        with pytest.raises(InvalidParameterError) as exc_info:
+            validate_request(ListTablesRequest, {"dataset_id": "a" * 1025})
+        assert "dataset_id" in str(exc_info.value)
+
+        with pytest.raises(InvalidParameterError) as exc_info:
+            validate_request(DescribeTableRequest, {"dataset_id": "ds", "table_id": "a" * 1025})
+        assert "table_id" in str(exc_info.value)
+
+        with pytest.raises(InvalidParameterError) as exc_info:
+            validate_request(GetTableInfoRequest, {"dataset_id": "", "table_id": "tbl"})
+        assert "dataset_id" in str(exc_info.value)
+
+
+class TestConcurrencyAndCache:
+    @pytest.mark.asyncio
+    async def test_client_cache_concurrency(self):
+        import concurrent.futures
+
+        from mcp_bigquery.cache import BigQueryClientCache
+
+        cache = BigQueryClientCache()
+        create_count = 0
+
+        def dummy_builder(project_id: str | None, location: str | None) -> MagicMock:
+            nonlocal create_count
+            import time
+
+            time.sleep(0.05)  # Simulate latency
+            create_count += 1
+            mock_client = MagicMock()
+            mock_client.project = project_id or "default"
+            return mock_client
+
+        def task_worker() -> MagicMock:
+            return cache.get_client("proj-concurrency", "US", builder=dummy_builder)  # type: ignore
+
+        # Run concurrent accesses in a thread pool to simulate multi-threaded client retrieval
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            futures = [executor.submit(task_worker) for _ in range(5)]
+            results = [f.result() for f in futures]
+
+        first_result = results[0]
+        for r in results:
+            assert r is first_result
+
+        assert create_count == 1
