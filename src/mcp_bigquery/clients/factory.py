@@ -14,6 +14,7 @@ from ..exceptions import (
     AuthenticationError,
     ConfigurationError,
     MCPBigQueryError,
+    PermissionError,
     handle_bigquery_error,
 )
 from ..logging_config import get_logger, log_performance
@@ -55,10 +56,31 @@ def _instantiate_client(project_id: str | None, location: str | None) -> bigquer
         )
 
     # Perform a lightweight dry-run to surface credential issues early.
-    try:
-        client.query("SELECT 1", job_config=bigquery.QueryJobConfig(dry_run=True))
-    except GoogleCloudError as exc:
-        raise handle_bigquery_error(exc) from exc
+    # Apply exponential backoff retry strategy for transient connection errors
+    max_retries = 3
+    base_delay = 1.0
+    for attempt in range(1, max_retries + 1):
+        try:
+            client.query("SELECT 1", job_config=bigquery.QueryJobConfig(dry_run=True))
+            break
+        except GoogleCloudError as exc:
+            bq_err = handle_bigquery_error(exc)
+
+            # Auth or Permission errors should fail fast
+            if isinstance(bq_err, AuthenticationError | PermissionError):
+                raise bq_err from exc
+
+            # On last attempt, raise the mapped domain exception
+            if attempt == max_retries:
+                raise bq_err from exc
+
+            logger.warning(
+                "Transient dry-run query failure on client validation (attempt %d/%d): %s. Retrying...",
+                attempt,
+                max_retries,
+                str(exc),
+            )
+            time.sleep(base_delay * (2 ** (attempt - 1)))
 
     return client
 

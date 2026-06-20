@@ -2,45 +2,35 @@
 
 from __future__ import annotations
 
-try:
-    from pydantic import BaseModel, Field, field_validator
-except ImportError:
-    # Fallback for when Pydantic is not installed
-    class BaseModel:
-        def __init__(self, **data):
-            for key, value in data.items():
-                setattr(self, key, value)
+from typing import Annotated, Any, TypeVar
 
-        def model_dump(self):
-            return {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
-
-    def Field(default=None, **kwargs):
-        return default
-
-    def field_validator(*args, **kwargs):
-        def decorator(func):
-            return func
-
-        return decorator
-
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from .constants import TableType
+from .exceptions import InvalidParameterError
 
 PROJECT_ID_PATTERN = r"^(?:[a-z][a-z0-9-]{4,28}[a-z0-9]|[a-z0-9.-]+:[a-z][a-z0-9-]{4,28}[a-z0-9])$"
+
+# Common custom types to make the validation definitions DRY
+ProjectId = Annotated[str, Field(pattern=PROJECT_ID_PATTERN)]
+DatasetId = Annotated[str, Field(min_length=1, max_length=1024)]
+TableId = Annotated[str, Field(min_length=1, max_length=1024)]
+
+T = TypeVar("T", bound=BaseModel)
 
 
 class ListDatasetsRequest(BaseModel):
     """Request model for listing datasets."""
 
-    project_id: str | None = Field(None, pattern=PROJECT_ID_PATTERN)
+    project_id: ProjectId | None = Field(None)
     max_results: int | None = Field(None, ge=1, le=10000)
 
 
 class ListTablesRequest(BaseModel):
     """Request model for listing tables."""
 
-    dataset_id: str = Field(..., min_length=1, max_length=1024)
-    project_id: str | None = Field(None, pattern=PROJECT_ID_PATTERN)
+    dataset_id: DatasetId
+    project_id: ProjectId | None = Field(None)
     max_results: int | None = Field(None, ge=1, le=10000)
     table_type_filter: list[str] | None = Field(None)
 
@@ -62,21 +52,21 @@ class ListTablesRequest(BaseModel):
 class DescribeTableRequest(BaseModel):
     """Request model for describing a table."""
 
-    table_id: str = Field(..., min_length=1, max_length=1024)
-    dataset_id: str = Field(..., min_length=1, max_length=1024)
-    project_id: str | None = Field(None, pattern=PROJECT_ID_PATTERN)
+    table_id: TableId
+    dataset_id: DatasetId
+    project_id: ProjectId | None = Field(None)
     format_output: bool = Field(False)
 
 
 class GetTableInfoRequest(BaseModel):
     """Request model for getting table info."""
 
-    table_id: str = Field(..., min_length=1, max_length=1024)
-    dataset_id: str = Field(..., min_length=1, max_length=1024)
-    project_id: str | None = Field(None, pattern=PROJECT_ID_PATTERN)
+    table_id: TableId
+    dataset_id: DatasetId
+    project_id: ProjectId | None = Field(None)
 
 
-def validate_request(request_class: type[BaseModel], data: dict) -> BaseModel:
+def validate_request(request_class: type[T], data: dict[str, Any]) -> T:
     """
     Validate request data using a Pydantic model.
 
@@ -90,21 +80,19 @@ def validate_request(request_class: type[BaseModel], data: dict) -> BaseModel:
     Raises:
         InvalidParameterError: If validation fails
     """
-    from .exceptions import InvalidParameterError
-
     try:
         return request_class(**data)
-    except ValueError as e:
-        # Parse Pydantic error to get field name
-        error_str = str(e)
-        if "validation error" in error_str.lower():
-            # Extract field name from error message
-            lines = error_str.split("\n")
-            for line in lines:
-                if "->" in line:
-                    field_name = line.split("->")[0].strip()
-                    raise InvalidParameterError(field_name, error_str) from e
-
-        raise InvalidParameterError("request", error_str) from e
+    except ValidationError as e:
+        # Smart ValidationError parsing mapping to clear InvalidParameterError
+        errors = e.errors()
+        if errors:
+            first_error = errors[0]
+            loc = first_error.get("loc", ())
+            field_name = str(loc[0]) if loc else "request"
+            msg = first_error.get("msg", "Validation error")
+            raise InvalidParameterError(
+                field_name, f"Validation error for field '{field_name}': {msg}"
+            ) from e
+        raise InvalidParameterError("request", str(e)) from e
     except Exception as e:
         raise InvalidParameterError("request", str(e)) from e

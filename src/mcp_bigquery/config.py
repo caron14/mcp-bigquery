@@ -2,6 +2,7 @@
 
 import os
 from dataclasses import dataclass, field
+from typing import Any
 
 from .exceptions import ConfigurationError
 
@@ -28,7 +29,7 @@ class Config:
         if self.log_level not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
             raise ConfigurationError(f"Invalid log_level: {self.log_level}")
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary."""
         return {
             "project_id": self.project_id,

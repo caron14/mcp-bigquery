@@ -271,10 +271,14 @@ async def _get_table_info_impl(request: GetTableInfoRequest) -> dict[str, Any]:
     if clustering:
         info["clustering"] = {"fields": clustering}
 
-    if getattr(table, "table_constraints", None):
-        constraints = table.table_constraints
+    constraints = getattr(table, "table_constraints", None)
+    if constraints is not None:
         info["table_constraints"] = {
-            "primary_key": (constraints.primary_key.columns if constraints.primary_key else None),
+            "primary_key": (
+                constraints.primary_key.columns
+                if getattr(constraints, "primary_key", None)
+                else None
+            ),
             "foreign_keys": (
                 [
                     {
@@ -284,7 +288,7 @@ async def _get_table_info_impl(request: GetTableInfoRequest) -> dict[str, Any]:
                     }
                     for fk in constraints.foreign_keys
                 ]
-                if constraints.foreign_keys
+                if getattr(constraints, "foreign_keys", None)
                 else []
             ),
         }

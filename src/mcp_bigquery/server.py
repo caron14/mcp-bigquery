@@ -4,7 +4,7 @@ import asyncio
 import json
 import logging
 import os
-from typing import Any
+from typing import Any, cast
 
 import mcp.server.stdio
 import mcp.types as types
@@ -188,7 +188,7 @@ def build_query_parameters(params: dict[str, Any] | None) -> list[bigquery.Scala
     ]
 
 
-@server.list_tools()
+@server.list_tools()  # type: ignore[misc, no-untyped-call]
 async def handle_list_tools() -> list[types.Tool]:
     logger.debug("Listing available tools")
     """List available MCP tools."""
@@ -198,9 +198,9 @@ async def handle_list_tools() -> list[types.Tool]:
     ]
 
 
-@server.call_tool()
+@server.call_tool()  # type: ignore[misc]
 async def handle_call_tool(
-    name: str, arguments: dict
+    name: str, arguments: dict[str, Any]
 ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
     """Handle tool execution requests."""
     logger.info(f"Executing tool: {name}")
@@ -245,7 +245,7 @@ async def handle_call_tool(
     if not handler:
         raise ValueError(f"Unknown tool: {name}")
 
-    result = await handler(arguments)
+    result = await cast(Any, handler)(arguments)
     return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
 
 
@@ -282,17 +282,18 @@ async def validate_sql(sql: str, params: dict[str, Any] | None = None) -> dict[s
     except BadRequest as e:
         error_msg = str(e)
         logger.warning(f"SQL validation failed: {error_msg}")
-        error_result = {
+        error_detail: dict[str, Any] = {"code": "INVALID_SQL", "message": error_msg}
+        error_result: dict[str, Any] = {
             "isValid": False,
-            "error": {"code": "INVALID_SQL", "message": error_msg},
+            "error": error_detail,
         }
 
         location = extract_error_location(error_msg)
         if location:
-            error_result["error"]["location"] = location
+            error_detail["location"] = location
 
         if hasattr(e, "errors") and e.errors:
-            error_result["error"]["details"] = e.errors
+            error_detail["details"] = e.errors
 
         return error_result
 
@@ -382,14 +383,15 @@ async def dry_run_sql(
         elif "Column not found" in error_msg:
             error_msg = f"Column not found. {error_msg}. Please check column names and spelling."
 
-        error_result = {"error": {"code": "INVALID_SQL", "message": error_msg}}
+        error_detail: dict[str, Any] = {"code": "INVALID_SQL", "message": error_msg}
+        error_result: dict[str, Any] = {"error": error_detail}
 
         location = extract_error_location(error_msg)
-        if location:
-            error_result["error"]["location"] = location
+        if location is not None:
+            error_detail["location"] = location
 
         if hasattr(e, "errors") and e.errors:
-            error_result["error"]["details"] = e.errors
+            error_detail["details"] = e.errors
 
         return error_result
 
@@ -454,7 +456,7 @@ async def validate_query_syntax(sql: str, params: dict[str, Any] | None = None) 
         }
 
 
-async def main():
+async def main() -> None:
     """Run the MCP server."""
     async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
         await server.run(
