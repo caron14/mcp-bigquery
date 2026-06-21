@@ -33,7 +33,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/caron14/mcp-bigquery"
-Documentation = "https://github.com/caron14/mcp-bigquery#readme"
+Documentation = "https://caron14.github.io/mcp-bigquery/"
 Repository = "https://github.com/caron14/mcp-bigquery.git"
 Issues = "https://github.com/caron14/mcp-bigquery/issues"
 
@@ -112,11 +112,15 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # imported but unused
 
+[tool.ruff.lint.isort]
+combine-as-imports = true
+
 # isort configuration
 [tool.isort]
 profile = "black"
 line_length = 100
 known_first_party = ["mcp_bigquery"]
+combine_as_imports = true
 
 # mypy configuration
 [tool.mypy]
