@@ -8,18 +8,21 @@ edit_uri: edit/main/docs/
 
 theme:
   name: material
+  font:
+    text: Inter
+    code: JetBrains Mono
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: indigo
-      accent: indigo
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: indigo
-      accent: indigo
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
@@ -81,6 +84,9 @@ extra:
       link: https://github.com/caron14/mcp-bigquery
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/mcp-bigquery/
+
+extra_css:
+  - assets/stylesheets/custom.css
 
 nav:
   - Home: index.md

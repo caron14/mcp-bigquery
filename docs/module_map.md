@@ -1,4 +1,4 @@
-# Module Responsibility Map (v0.4.2)
+# Module Responsibility Map (v0.7.0)
 
 ## Overview
 This document lists the primary modules, their responsibilities, and notable internal dependencies to help contributors navigate the codebase.
@@ -9,6 +9,7 @@ This document lists the primary modules, their responsibilities, and notable int
 | `clients/factory.py` | 4 | 0 |
 | `schema_explorer/datasets.py` | 2 | 0 |
 | `schema_explorer/describe.py` | 2 | 0 |
+| `schema_explorer/preview.py` | 3 | 0 |
 | `schema_explorer/tables.py` | 4 | 0 |
 
 ## Core Runtime
@@ -24,7 +25,8 @@ This document lists the primary modules, their responsibilities, and notable int
 - **`mcp_bigquery.schema_explorer.datasets`** — Dataset listing workflows with centralised validation and formatting helpers.
 - **`mcp_bigquery.schema_explorer.tables`** — Table listing and detailed metadata aggregation (partitioning, clustering, constraints).
 - **`mcp_bigquery.schema_explorer.describe`** — Schema-focused describe endpoint with nested-field formatting and shared serializers.
-  - Shared dependencies: `validators`, `clients`, `exceptions`.
+- **`mcp_bigquery.schema_explorer.preview`** — Table data preview (cost-free) with environment-based safety opt-in.
+  - Shared dependencies: `validators`, `clients`, `exceptions`, `config`.
 
 ## Shared Utilities
 - **`mcp_bigquery.logging_config`** — Log level resolution, basic formatting, and a simple performance decorator.
@@ -36,4 +38,4 @@ This document lists the primary modules, their responsibilities, and notable int
 - `server` remains the sole entrypoint that touches `sql_analyzer`, minimizing cross-module coupling.
 - Logging flows through `logging_config` only; no other module calls `logging.basicConfig`, ensuring consistent stdout/stderr behaviour.
 
-Refer back to `TODO_v0.4.2.md` for outstanding chores tied to this architecture.
+Refer back to [TODO.md](file:///Users/sho/repo/mcp-bigquery/TODO.md) for outstanding chores tied to this architecture.
