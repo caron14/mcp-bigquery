@@ -81,7 +81,8 @@ mcp-bigquery/
 │   │   ├── __init__.py
 │   │   ├── datasets.py      # Dataset listing flows
 │   │   ├── tables.py        # Table metadata aggregation
-│   │   └── describe.py      # Schema inspection + shared formatters
+│   │   ├── describe.py      # Schema inspection + shared formatters
+│   │   └── preview.py       # Table data preview (cost-free)
 │   ├── sql_analyzer.py      # SQL analysis helpers
 │   ├── validators.py        # Input validation utilities
 │   ├── exceptions.py        # Custom exception types
@@ -297,7 +298,7 @@ setup_logging(level=level, format_json=True)
 
 The server follows MCP protocol standards:
 
-1. **Tool Registration** - Eight tools registered in `handle_list_tools()`
+1. **Tool Registration** - Nine tools registered in `handle_list_tools()`
 2. **Tool Execution** - Requests handled in `handle_call_tool()`
 3. **Error Handling** - Consistent error format across all tools
 4. **Async Support** - All operations are async for performance
@@ -317,9 +318,10 @@ The server follows MCP protocol standards:
 - SQLAnalyzer provides lightweight dependency extraction and syntax heuristics.
 - Designed for quick regex-based checks and dependency graphs.
 
-#### Schema Explorer Package (`schema_explorer/`) - updated v0.4.2
-- `datasets.py`, `tables.py`, and `describe.py` split responsibilities for dataset listing, table aggregation, and schema formatting.
+#### Schema Explorer Package (`schema_explorer/`) - updated v0.7.0
+- `datasets.py`, `tables.py`, `describe.py`, and `preview.py` split responsibilities for dataset listing, table aggregation, schema formatting, and row-level preview.
 - `describe.py` now owns shared serializers (timestamps, partitions, nested schema trees).
+- `preview.py` supports row preview with recursion and is gated by environment-level opt-in controls.
 - Modules rely on the client factory plus `validators`/`exceptions` and never import each other, preserving clean boundaries.
 
 

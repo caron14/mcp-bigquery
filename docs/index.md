@@ -15,7 +15,14 @@
 
 ## Overview
 
-The `mcp-bigquery` package provides a comprehensive MCP server for BigQuery SQL validation, dry-run analysis, dependency analysis, and schema discovery. This server provides eight tools for validating, analyzing, and exploring BigQuery schemas without executing queries.
+The `mcp-bigquery` package provides a comprehensive MCP server for BigQuery SQL validation, dry-run analysis, dependency analysis, and schema discovery. This server provides nine tools for validating, analyzing, and exploring BigQuery schemas without executing queries.
+
+!!! info "What's new in v0.7.0"
+    - Added cost-free table preview tool (`bq_preview_table`) and security opt-in configuration.
+    - Centralised configuration via environment variables like `MCP_BQ_ENABLE_PREVIEW`.
+
+!!! info "What's new in v0.6.0"
+    - Thread-safe caching, recursive AST queries, backoff retries, and Google API exception mapping.
 
 !!! info "What's new in v0.5.0"
     - Schema explorer formatters are consolidated into `describe.py` and `tables.py`.
@@ -35,11 +42,12 @@ The `mcp-bigquery` package provides a comprehensive MCP server for BigQuery SQL 
 - **Enhanced Syntax Validation**: Detailed error reporting with suggestions
 [→ SQL Analysis Guide](usage.md#sql-analysis)
 
-### 📊 Schema Explorer & Metadata (updated v0.4.2)
+### 📊 Schema Explorer & Metadata (updated v0.7.0)
 - **Dataset Explorer**: List and explore datasets in your BigQuery project
 - **Table Browser**: Browse tables with metadata, partitioning, and clustering info via dedicated formatters
 - **Schema Inspector**: Get detailed table schemas with nested field support
 - **Comprehensive Table Info**: Access all table metadata including encryption and time travel using the new modular helpers
+- **Table Data Preview**: Preview table data cost-free without query scan billing (security opt-in required)
 [→ Schema Discovery Guide](usage.md#schema-discovery)
 
 ### 🏷️ Additional Features
@@ -119,6 +127,43 @@ The `mcp-bigquery` package provides a comprehensive MCP server for BigQuery SQL 
           "table_type": "TABLE",
           "num_rows": 164656,
           "num_bytes": 6432064
+        }
+      ]
+    }
+    ```
+
+=== "Table Data Preview"
+
+    ```json
+    {
+      "tool": "bq_preview_table",
+      "arguments": {
+        "dataset_id": "samples",
+        "table_id": "shakespeare",
+        "project_id": "bigquery-public-data",
+        "max_results": 2
+      }
+    }
+    ```
+
+    **Response:**
+    ```json
+    {
+      "dataset_id": "samples",
+      "table_id": "shakespeare",
+      "project": "bigquery-public-data",
+      "rows": [
+        {
+          "word": "thead",
+          "word_count": 2,
+          "corpus": "2kinghenryiv",
+          "corpus_date": 1598
+        },
+        {
+          "word": "remorse",
+          "word_count": 1,
+          "corpus": "2kinghenryiv",
+          "corpus_date": 1598
         }
       ]
     }

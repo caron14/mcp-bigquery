@@ -1,6 +1,6 @@
 # Usage Guide
 
-This guide covers how to use MCP BigQuery's eight tools for SQL validation, dependency analysis, and schema discovery.
+This guide covers how to use MCP BigQuery's nine tools for SQL validation, dependency analysis, and schema discovery.
 
 ## SQL Validation
 
@@ -438,6 +438,45 @@ Access all table metadata with `bq_get_table_info`:
     "table_id": "users",
     "dataset_id": "analytics"
   }
+}
+```
+
+### Preview Table Data (v0.7.0)
+
+Get a preview of table data without running a query job with `bq_preview_table`. This tool is **completely cost-free** as it uses BigQuery's row listing API instead of scanning query data.
+
+!!! warning "Security Opt-in Required"
+    To prevent unintended exposure of sensitive data, this tool is disabled by default. You must explicitly opt in by setting the environment variable `MCP_BQ_ENABLE_PREVIEW=true` in your server environment.
+
+```json
+{
+  "tool": "bq_preview_table",
+  "arguments": {
+    "dataset_id": "analytics",
+    "table_id": "users",
+    "max_results": 5
+  }
+}
+```
+
+Response includes sample rows (maximum of 10 rows):
+```json
+{
+  "dataset_id": "analytics",
+  "table_id": "users",
+  "project": "your-project-id",
+  "rows": [
+    {
+      "user_id": 1,
+      "name": "Alice",
+      "created_at": "2024-01-01T00:00:00"
+    },
+    {
+      "user_id": 2,
+      "name": "Bob",
+      "created_at": "2024-01-02T00:00:00"
+    }
+  ]
 }
 ```
 

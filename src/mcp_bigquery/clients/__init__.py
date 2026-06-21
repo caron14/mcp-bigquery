@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from google.cloud import bigquery
 
-from .factory import get_bigquery_client as _get_bigquery_client
-from .factory import get_bigquery_client_with_retry as _get_bigquery_client_with_retry
+from .factory import (
+    get_bigquery_client as _get_bigquery_client,
+    get_bigquery_client_with_retry as _get_bigquery_client_with_retry,
+)
 
 __all__ = ["get_bigquery_client", "get_bigquery_client_with_retry"]
 

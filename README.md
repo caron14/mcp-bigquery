@@ -12,66 +12,64 @@
 [![Downloads](https://img.shields.io/pypi/dd/mcp-bigquery)](https://pypi.org/project/mcp-bigquery/)
 
 [**Documentation**](https://caron14.github.io/mcp-bigquery/) | 
-[**Quick Start**](#-quick-start-4-minutes) | 
-[**Tools**](#-available-tools) | 
-[**Examples**](#-real-world-examples)
+[**Quick Start**](#-quick-start) | 
+[**Examples**](#-examples-of-usage)
 
 </div>
 
 ---
 
-## 📌 What is this?
+## Overview
 
-**mcp-bigquery** is an MCP (Model Context Protocol) server that enables AI assistants like Claude to **safely** interact with Google BigQuery.
+mcp-bigquery is a Model Context Protocol (MCP) server that enables AI assistants (such as Claude) to interact securely with Google BigQuery.
 
-### 🎯 Key Features
+### Key Features
 
-```mermaid
-graph LR
-    A[AI Assistant] -->|MCP Protocol| B[mcp-bigquery]
-    B -->|Dry-run Only| C[BigQuery API]
-    B -.->|❌ Never Executes| D[Actual Query Execution]
-```
+* **Secure execution**: All operations are strictly limited to dry-run verification. The server never executes queries that mutate data or incur execution costs.
+* **Cost transparency**: Provides estimates of query costs and processed bytes before execution.
+* **Static analysis**: Analyzes query dependencies and validates SQL syntax.
+* **Schema exploration**: Browses datasets, tables, and columns.
 
-- **🛡️ 100% Safe**: All operations are dry-run only (never executes queries)
-- **💰 Cost Transparency**: See costs before running any query
-- **🔍 Complete Analysis**: Analyze dependencies and validate SQL syntax
-- **📊 Schema Explorer**: Browse datasets, tables, and columns with ease
-
-### ⚡ Why use mcp-bigquery?
+### Business Value
 
 | Problem | Solution with mcp-bigquery |
 |---------|---------------------------|
-| 💸 Accidentally running expensive queries | Check costs before execution |
-| 🐛 Wasting time on SQL errors | Detect syntax errors before running |
-| 🗺️ Unknown table structures | Easily explore schemas |
-| ⚠️ AI executing dangerous operations | Everything is read-only and safe |
+| Unintentional execution of costly queries | Pre-execution cost estimation |
+| Delayed development due to SQL syntax errors | Early syntax error detection |
+| Lack of visibility into schema structures | Secure schema metadata discovery |
+| Risk of unauthorized data mutation by AI | Enforced dry-run constraints |
 
-## 🚀 Quick Start (4 minutes)
+---
 
-### Step 1: Install (1 minute)
+## Quick Start
+
+### Step 1: Installation
+
+Install the package via pip:
 
 ```bash
 pip install mcp-bigquery
 ```
 
-### Step 2: Authenticate with Google Cloud (2 minutes)
+### Step 2: Authentication
+
+Set up Google Cloud Platform authentication:
 
 ```bash
-# For personal accounts
+# For user account authentication
 gcloud auth application-default login
 
-# For service accounts
+# For service account authentication
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json
 ```
 
-### Step 3: Configure Claude Desktop (1 minute)
+### Step 3: Claude Desktop Configuration
 
-Open your Claude Desktop config:
-- **Mac**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+Configure the server in the Claude Desktop configuration file:
+* **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+* **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
-Add this configuration:
+Add the following entry:
 
 ```json
 {
@@ -79,49 +77,127 @@ Add this configuration:
     "mcp-bigquery": {
       "command": "mcp-bigquery",
       "env": {
-        "BQ_PROJECT": "your-gcp-project-id"  // ← Replace with your project ID
+        "BQ_PROJECT": "your-gcp-project-id"
       }
     }
   }
 }
 ```
 
-### Step 4: Test It!
+### Step 4: Verification
 
-Restart Claude Desktop and try these questions:
+Restart Claude Desktop and run the following queries to verify the setup:
 
-```
-"What datasets are available in my BigQuery project?"
-"Can you estimate the cost of: SELECT * FROM dataset.table"
-"Show me the schema for the users table"
-```
+* "What datasets are available in my BigQuery project?"
+* "Can you estimate the cost of: SELECT * FROM dataset.table"
+* "Show me the schema for the users table"
 
-## 🛠️ Available Tools
+---
 
-### 📝 SQL Validation & Analysis
+## Available Tools
 
-| Tool | Purpose | When to Use |
-|------|---------|-------------|
-| **bq_validate_sql** | Check SQL syntax | Before running any query |
-| **bq_dry_run_sql** | Get cost estimates & metadata | 💰 To check costs |
-| **bq_extract_dependencies** | Extract table dependencies | To understand data lineage |
-| **bq_validate_query_syntax** | Detailed error analysis | To debug SQL errors |
+### SQL Validation and Analysis
 
-### 🔍 Schema Discovery
+| Tool | Purpose | Primary Use Case |
+|------|---------|------------------|
+| **bq_validate_sql** | Check SQL syntax | Verification prior to query execution |
+| **bq_dry_run_sql** | Retrieve cost estimates and metadata | Pre-execution cost assessment |
+| **bq_extract_dependencies** | Map table dependencies | Lineage and dependency mapping |
+| **bq_validate_query_syntax** | Detailed syntax analysis | Debugging complex SQL queries |
 
-| Tool | Purpose | When to Use |
-|------|---------|-------------|
-| **bq_list_datasets** | List all datasets | To explore your project |
-| **bq_list_tables** | List tables with partitioning info | To browse a dataset |
-| **bq_describe_table** | Get detailed table schema | To understand columns |
-| **bq_get_table_info** | Complete table metadata | To get statistics |
-| **bq_preview_table** | Preview table data (cost-free) | To view sample records without scan costs |
+### Schema Discovery
+
+| Tool | Purpose | Primary Use Case |
+|------|---------|------------------|
+| **bq_list_datasets** | List all datasets in the project | Initial project discovery |
+| **bq_list_tables** | List tables with partitioning metadata | Dataset structure browsing |
+| **bq_describe_table** | Get detailed schema details | Column-level verification |
+| **bq_get_table_info** | Retrieve comprehensive metadata | Table statistics analysis |
+| **bq_preview_table** | Preview table data (cost-free) | Checking sample records without data scan costs |
 
 > [!IMPORTANT]
-> **bq_preview_table** uses `client.list_rows` (API: `tabledata.list`) to retrieve sample rows directly without running a query job, keeping it **cost-free (0 bytes billed)**. To prevent accidental data exposure of sensitive information (PII) to the LLM, this tool is **disabled by default**. You must explicitly opt-in by setting `MCP_BQ_ENABLE_PREVIEW=true` in your environment.
+> The **bq_preview_table** tool uses `client.list_rows` (API: `tabledata.list`) to retrieve sample rows directly, resulting in zero bytes scanned and no execution costs. To prevent unintended exposure of sensitive information (such as PII) to the LLM, this tool is disabled by default. You must explicitly opt in by setting `MCP_BQ_ENABLE_PREVIEW=true` in your environment config.
 
+---
 
-## 💡 Real-World Examples
+## Configuration
+
+### Environment Variables
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `BQ_PROJECT` | Target GCP Project ID | Determined via ADC |
+| `BQ_LOCATION` | Target BigQuery Region | Not set |
+| `SAFE_PRICE_PER_TIB` | Price per TiB for cost estimation | 5.0 |
+| `LOG_LEVEL` | Logging verbosity (DEBUG, INFO, WARNING, ERROR, CRITICAL) | WARNING |
+| `MCP_BQ_ENABLE_PREVIEW` | Enable the bq_preview_table tool (true/false) | false |
+
+### Example .env File
+
+For local testing or development environments, you can define these variables in a `.env` file:
+
+```env
+BQ_PROJECT=your-gcp-project-id
+BQ_LOCATION=asia-northeast1
+SAFE_PRICE_PER_TIB=5.0
+LOG_LEVEL=WARNING
+MCP_BQ_ENABLE_PREVIEW=true
+```
+
+### Complete Claude Desktop Configuration Example
+
+```json
+{
+  "mcpServers": {
+    "mcp-bigquery": {
+      "command": "mcp-bigquery",
+      "env": {
+        "BQ_PROJECT": "my-production-project",
+        "BQ_LOCATION": "asia-northeast1",
+        "SAFE_PRICE_PER_TIB": "6.0",
+        "LOG_LEVEL": "WARNING",
+        "MCP_BQ_ENABLE_PREVIEW": "true"
+      }
+    }
+  }
+}
+```
+
+---
+
+## Troubleshooting
+
+### Mapped Errors and Solutions
+
+#### Authentication Error
+```
+Error: Could not automatically determine credentials
+```
+* **Solution**: Re-authenticate using the command line:
+  ```bash
+  gcloud auth application-default login
+  ```
+
+#### Permission Denied
+```
+Error: User does not have bigquery.tables.get permission
+```
+* **Solution**: Grant the `BigQuery Data Viewer` role to the target identity:
+  ```bash
+  gcloud projects add-iam-policy-binding YOUR_PROJECT \
+    --member="user:your-email@example.com" \
+    --role="roles/bigquery.dataViewer"
+  ```
+
+#### Project ID Missing
+```
+Error: Project ID is required
+```
+* **Solution**: Ensure the `BQ_PROJECT` variable is set correctly in your configuration.
+
+---
+
+## Examples of Usage
 
 ### Example 1: Check Costs Before Running
 
@@ -182,151 +258,41 @@ result = bq_extract_dependencies(sql=query)
 #   users → final_result
 ```
 
-## 🎨 How It Works
+---
 
-```
-Your Code ← → Claude/AI Assistant
-                   ↓
-            MCP Protocol
-                   ↓
-            mcp-bigquery
-                   ↓
-         BigQuery API (Dry-run)
-                   ↓
-             BigQuery
-      (Never executes actual queries)
-```
+## Project Status and Version History
 
-## ⚙️ Configuration
-
-### Environment Variables
-
-```bash
-export BQ_PROJECT="my-project"        # GCP Project ID (required)
-export BQ_LOCATION="asia-northeast1"  # Region (optional)
-export SAFE_PRICE_PER_TIB="5.0"      # Price per TiB (default: $5)
-export LOG_LEVEL="INFO"              # Optional log level override
-export MCP_BQ_ENABLE_PREVIEW="true"  # Opt-in to enable bq_preview_table (default: false)
-```
-
-### Full Claude Desktop Configuration
-
-```json
-{
-  "mcpServers": {
-    "mcp-bigquery": {
-      "command": "mcp-bigquery",
-      "env": {
-        "BQ_PROJECT": "my-production-project",
-        "BQ_LOCATION": "asia-northeast1",
-        "SAFE_PRICE_PER_TIB": "6.0",
-        "LOG_LEVEL": "WARNING",
-        "MCP_BQ_ENABLE_PREVIEW": "true"
-      }
-    }
-  }
-}
-```
-
-## 🔧 Troubleshooting
-
-### Common Issues & Solutions
-
-#### ❌ Authentication Error
-```
-Error: Could not automatically determine credentials
-```
-**Solution:**
-```bash
-gcloud auth application-default login
-```
-
-#### ❌ Permission Error
-```
-Error: User does not have bigquery.tables.get permission
-```
-**Solution:** Grant BigQuery Data Viewer role
-```bash
-gcloud projects add-iam-policy-binding YOUR_PROJECT \
-  --member="user:your-email@example.com" \
-  --role="roles/bigquery.dataViewer"
-```
-
-#### ❌ Project Not Set
-```
-Error: Project ID is required
-```
-**Solution:** Set `BQ_PROJECT` in your configuration
-
-### Debug Mode
-
-If issues persist, enable debug mode:
-
-```json
-{
-  "env": {
-    "LOG_LEVEL": "INFO",
-    "BQ_PROJECT": "your-project"
-  }
-}
-```
-
-## 📚 Learn More
-
-### Getting Started
-- [Installation Guide](https://caron14.github.io/mcp-bigquery/installation/)
-- [Usage Guide](https://caron14.github.io/mcp-bigquery/usage/)
-
-### For Developers
-- [Local Development](https://caron14.github.io/mcp-bigquery/development/)
-- [Contributing Guide](CONTRIBUTING.md)
-
-## 🚦 Project Status
-
-| Version | Release Date | Key Features |
-|---------|--------------|--------------|
-| v0.7.0 | 2026-06-21 | Cost-free table preview tool (`bq_preview_table`) and security opt-in |
-| v0.6.0 | 2026-06-21 | Thread-safe caching, recursive AST queries, backoff retries, mapping exceptions |
-| v0.5.0 | 2026-01-02 | Consolidated formatters, client cache, logging controls |
-| v0.4.2 | 2025-12-08 | Modular schema explorer, unified client/logging controls |
-| v0.4.1 | 2025-01-22 | Better error handling, debug logging |
-| v0.4.0 | 2025-01-22 | Added 6 schema discovery tools |
-| v0.3.0 | 2025-01-17 | SQL analysis engine |
-| v0.2.0 | 2025-01-16 | Basic validation & dry-run |
-
-
-## 🤝 Contributing
-
-Pull requests are welcome! See our [Contributing Guide](CONTRIBUTING.md).
-
-```bash
-# Setup development environment
-git clone https://github.com/caron14/mcp-bigquery.git
-cd mcp-bigquery
-pip install -e ".[dev]"
-
-# Run tests
-pytest tests/
-```
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
-## 🙏 Acknowledgments
-
-- Google BigQuery team for the excellent API
-- Anthropic for the MCP protocol
-- All contributors and users
+| Version | Release Date | Summary of Changes |
+|---------|--------------|--------------------|
+| v0.7.0 | 2026-06-21 | Added cost-free table preview tool (`bq_preview_table`) and security opt-in configuration |
+| v0.6.0 | 2026-06-21 | Thread-safe caching, recursive AST queries, backoff retries, and Google API exception mapping |
+| v0.5.0 | 2026-01-02 | Consolidated formatters, client cache, and unified logging controls |
+| v0.4.2 | 2025-12-08 | Modular schema explorer and unified client/logging controls |
+| v0.4.1 | 2025-01-22 | Error handling and debug logging improvements |
+| v0.4.0 | 2025-01-22 | Added schema discovery tools |
+| v0.3.0 | 2025-01-17 | Integrated SQL static analysis engine |
+| v0.2.0 | 2025-01-16 | Initial release supporting basic validation and dry-run queries |
 
 ---
 
-<div align="center">
+## Development and Contribution
 
-**Built for safe BigQuery exploration** 🛡️
+For instructions on local development setup and contribution policies, please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) guide.
 
-[Report Bug](https://github.com/caron14/mcp-bigquery/issues) · 
-[Request Feature](https://github.com/caron14/mcp-bigquery/issues) · 
-[Discussions](https://github.com/caron14/mcp-bigquery/discussions)
+```bash
+# Clone the repository
+git clone https://github.com/caron14/mcp-bigquery.git
+cd mcp-bigquery
 
-</div>
+# Install development dependencies
+pip install -e ".[dev]"
+
+# Execute the test suite
+pytest tests/
+```
+
+---
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
