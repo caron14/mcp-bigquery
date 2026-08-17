@@ -44,7 +44,7 @@ These modules **implement** the [schema exploration workflow](workflows/schema-e
 - `pyproject.toml` defines package metadata, the `mcp-bigquery` console script, dependencies, tool settings, and test discovery.
 - `README.md` is the main installation/tool/configuration overview.
 - `docs/usage.md`, `docs/development.md`, and `docs/module_map.md` provide published operational and contributor detail; `mkdocs.yml` defines navigation and MkDocs behavior.
-- `.github/workflows/ci.yml` enforces formatting and credential-free tests; `.github/workflows/docs.yml` validates/deploys MkDocs; `.github/workflows/openwiki-update.yml` refreshes this generated wiki.
+- `.github/workflows/ci.yml` enforces formatting and credential-free tests; `.github/workflows/docs.yml` validates and deploys MkDocs.
 
 ## Recent evolution landmarks
 

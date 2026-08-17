@@ -1,7 +1,7 @@
 ---
 type: Operations Guide
 title: Development, documentation, and automation runbook
-description: Local setup and operational guidance for MCP BigQuery, including authentication, configuration, logging, checks, documentation deployment, and scheduled wiki refresh.
+description: Local setup and operational guidance for MCP BigQuery, including authentication, configuration, logging, checks, and documentation deployment.
 resource: docs/development.md
 tags: [operations, development, ci, documentation]
 ---
@@ -47,10 +47,6 @@ mypy src/
 ## Published documentation
 
 The user documentation source is `docs/`, configured by `mkdocs.yml` and built with Material for MkDocs. `.github/workflows/docs.yml` runs `mkdocs build --strict --verbose` on relevant documentation pull requests and deploys GitHub Pages on pushes to `main`. When a feature changes the MCP contract or setup, update the README and relevant `docs/` page alongside its tests; `mkdocs.yml` has the published navigation.
-
-## OpenWiki automation
-
-The untracked `.github/workflows/openwiki-update.yml` schedules a daily 08:00 UTC update and supports manual dispatch. It installs the OpenWiki CLI, runs `openwiki code --update --print`, and creates a pull request that includes the `openwiki` directory and OpenWiki-related repository instructions/workflow. It uses repository secrets only inside GitHub Actions; never copy their values into documentation.
 
 Generated pages are under `openwiki/`; this guide is a map of source-backed operating practice, not a replacement for the public MkDocs documentation.
 

@@ -31,7 +31,7 @@ For operational details, including log flags and CI behavior, see [development a
 - [Architecture overview](architecture/overview.md) explains the stdio server, its dispatcher, and the common configuration/client/error layers.
 - [SQL safety workflow](workflows/sql-safety.md) covers the dry-run tools and the local `sqlparse` analysis that the server dispatches.
 - [Schema exploration workflow](workflows/schema-exploration.md) covers metadata tools, response shaping, validation, and the preview-data opt-in.
-- [Development and release operations](operations/development-and-release.md) covers configuration, logging, CI, docs deployment, and the scheduled OpenWiki workflow.
+- [Development and release operations](operations/development-and-release.md) covers configuration, logging, CI, and docs deployment.
 - [Testing guidance](testing.md) describes the credential-free unit suite, mocked BigQuery seam, and enforced checks.
 - [Source map](source-map.md) is the change-oriented map from behavior to implementation files.
 
@@ -52,10 +52,6 @@ The MCP server exposes all nine tool definitions in `src/mcp_bigquery/server.py`
 - **BigQuery access behavior:** preserve project/location resolution, early dry-run client validation, mapped errors, and cache behavior in [architecture overview](architecture/overview.md).
 - **Anything that returns rows:** retain the preview opt-in, validation, and hard maximum of ten rows in [schema exploration](workflows/schema-exploration.md); cost-free does not mean risk-free.
 - **SQL parser behavior:** add focused examples to the unit suite; static analysis does not call BigQuery and should stay separate from dry-run validation.
-
-## Current repository state
-
-The inspected HEAD is on the `v0.8.0-dev` branch and the package metadata reports version `0.7.0`. Recent v0.7.0 history added the guarded preview tool and then updated published documentation. The working tree also contains untracked OpenWiki automation and generated wiki files; those are not application behavior.
 
 ## Backlog
 
