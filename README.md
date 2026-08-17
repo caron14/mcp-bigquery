@@ -264,6 +264,7 @@ result = bq_extract_dependencies(sql=query)
 
 | Version | Release Date | Summary of Changes |
 |---------|--------------|--------------------|
+| v0.7.1 | 2026-08-17 | Refined mcp dependency constraints and streamlined wiki documentation |
 | v0.7.0 | 2026-06-21 | Added cost-free table preview tool (`bq_preview_table`) and security opt-in configuration |
 | v0.6.0 | 2026-06-21 | Thread-safe caching, recursive AST queries, backoff retries, and Google API exception mapping |
 | v0.5.0 | 2026-01-02 | Consolidated formatters, client cache, and unified logging controls |
